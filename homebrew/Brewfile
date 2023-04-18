@@ -1,0 +1,189 @@
+################################################################################
+# Prerequisites
+################################################################################
+
+tap "homebrew/bundle"
+tap "homebrew/cask"
+tap "homebrew/core"
+
+################################################################################
+# Applications
+################################################################################
+
+# Java
+# TODO: Migrate to Temurin
+tap "AdoptOpenJDK/openjdk"
+cask "adoptopenjdk8"                            # AdoptOpenJDK 8
+cask "adoptopenjdk11"                           # AdoptOpenJDK 11
+
+# Java under Eclipse Temurin
+# brew untap AdoptOpenJDK/openjdk
+tap "homebrew/cask-versions"
+cask "temurin8"                                 # JDK 8 from https://adoptium.net/
+cask "temurin"                                  # JDK 19 from https://adoptium.net/
+
+# Basics
+cask "bartender"                                # Take control of your menu bar
+cask "beyond-compare"                           # Compare files and folders
+cask "dropbox"                                  # Client for the Dropbox cloud storage service
+cask "firefox"                                  # Mozilla Firefox
+cask "google-chrome"                            # Cross-platform web browser
+cask "iterm2"                                   # Terminal emulator as alternative to Apple's Terminal app
+cask "syncthing"                                # Open source continuous file synchronization application
+
+# Screen capture
+cask "licecap"                                  # Animated screen capture application
+
+# Encryption
+brew "gnupg"                                    # GNU Pretty Good Privacy (PGP) package
+cask "gpg-suite"                                # GPG Suite
+cask "keepassxc"                                # Password manager app
+# Currently broken on Big Sur; application is untrusted
+# cask "keybase"                                  # End-to-end encryption software
+
+# Notebook
+cask "evernote"                                 # App for note taking, organizing, task lists, and archiving
+cask 'obsidian'                                 # Markdown note management
+
+# APIs
+cask "insomnia"                                 # HTTP and GraphQL Client
+
+# eBooks
+cask "kindle"                                   # Kindle for Mac
+
+################################################################################
+# Utilities
+################################################################################
+
+brew "cmake"                                    # Cross-platform make
+brew "coreutils"                                # GNU File, Shell, and Text utilities
+brew "ctags"                                    # Reimplementation of ctags(1)
+brew "datamash"                                 # Tool to perform numerical, textual & statistical operations
+brew "entr"                                     # Run arbitrary commands when files change
+brew "fd"                                       # Simple, fast and user-friendly alternative to find
+brew "findutils"                                # Collection of GNU find, xargs, and locate
+brew "fzf"                                      # Command-line fuzzy finder written in Go
+brew "gnu-sed"                                  # GNU implementation of the famous stream editor
+brew "gnuplot"                                  # Command-driven, interactive function plotting
+brew "graphviz"                                 # Graph visualization software from AT&T and Bell Labs
+brew "htop"                                     # Improved top (interactive process viewer)
+brew "jq"                                       # Lightweight and flexible command-line JSON processor
+brew "miller"                                   # Like sed, awk, cut, join & sort for name-indexed data such as CSV
+brew "mitmproxy"                                # Intercept, modify, replay, save HTTP/S traffic
+brew "ncdu"                                     # NCurses Disk Usage
+brew "neovim"                                   # Ambitious Vim-fork focused on extensibility and agility
+brew "openssh"                                  # OpenBSD freely-licensed SSH connectivity tools
+brew "parallel"                                 # Shell command parallelization utility
+brew "parquet-tools"                            # Apache Parquet command-line tools and utilities
+brew "pkg-config"                               # Manage compile and link flags for libraries
+brew "q"                                        # Run SQL directly on CSV or TSV files
+brew "ripgrep"                                  # Search tool like grep and The Silver Searcher
+brew "sampler"                                  # Tool for shell commands execution, visualization and alerting
+brew "slackcat"                                 # Command-line utility for posting snippets to Slack
+brew "tree"                                     # Display directories as trees (with optional color/HTML output)
+brew "watch"                                    # Executes a program periodically, showing output fullscreen
+brew "wget"                                     # Internet file retriever
+brew "xsv"                                      # Fast CSV toolkit written in Rust
+brew "zsh"                                      # UNIX shell (command interpreter)
+cask "scroll-reverser"                          # Tool to reverse the direction of scrolling
+
+# Document and image manipulation
+brew "imagemagick"                              # Tools and libraries to manipulate images in many formats
+brew "pandoc"                                   # Swiss-army knife of markup format conversion
+brew "pngpaste"                                 # Paste PNG into files
+
+# tmux
+brew "tmux"                                     # Terminal multiplexer
+brew "tmuxinator"                               # Manage complex tmux sessions easily
+brew "reattach-to-user-namespace"               # Reattach process (e.g., tmux) to background
+
+# Terminal plotting
+tap "rs/tap"
+brew "jaggr"                                    # JSON Aggregation CLI
+brew "jplot"                                    # iTerm2 expvar/JSON monitoring tool
+
+################################################################################
+# Development
+################################################################################
+
+# Version control
+brew "git"                                      # Distributed revision control system
+brew "git-lfs"                                  # Git extension for versioning large files
+brew "git-secret"                               # Bash-tool to store the private data inside a git repo
+brew "gh"                                       # GitHub command-line tool
+
+# Java
+cask "visualvm"                                 # JVM visualiser
+brew "maven"                                    # Java-based project management
+brew "gradle"                                   # Open-source build automation tool based on the Groovy and Kotlin DSL
+
+# Clojure
+brew "leiningen"                                # Build tool for Clojure
+
+# Scala
+brew "mill"                                     # Scala build tool
+brew "sbt"                                      # Build tool for Scala projects
+brew "scala"                                    # JVM-based programming language
+brew "ammonite-repl"                            # Ammonite is a cleanroom re-implementation of the Scala REPL
+
+# Haskell
+brew "ghcup"                                    # Installer for the general purpose language Haskell
+brew "cabal-install"                            # Command-line interface for Cabal and Hackage
+brew "haskell-stack"                            # The Haskell Tool Stack
+
+# Groovy
+brew "groovy"                                   # Java-based scripting language
+
+# Python
+brew "python"                                   # Interpreted, interactive, object-oriented programming language
+
+# Elm
+brew "elm"                                      # Functional programming language for building browser-based GUIs
+
+# Go
+brew "go"                                       # Open source programming language to build simple/reliable/efficient software
+
+# Ruby
+brew "ruby"                                     # Powerful, clean, object-oriented scripting language
+
+# Javascript
+brew "node"                                     # platform built on v8 to build network applications
+cask "visual-studio-code"                       # Open-source code editor
+
+# AWS
+brew "awscli"                                   # Official Amazon AWS command-line interface
+brew "awslogs"                                  # Simple command-line tool to read AWS CloudWatch logs
+brew "terraform", link: false                   # Tool to build, change, and version infrastructure
+brew "terragrunt"                               # Thin wrapper for Terraform e.g. for locking state
+brew "tfenv", link: true                        # Terraform version manager inspired by rbenv
+
+# Heroku
+tap "heroku/brew" 
+brew "heroku"                                   # Everything you need to get started with Heroku
+
+# SQL
+cask "sequel-pro"                               # MySQL/MariaDB database management platform
+cask "sqlworkbenchj"                            # Java-based SQL client
+
+# Shell
+brew "bats-core"                                # Bash Automated Testing System
+
+# Linters
+brew "aspell"                                   # Spell checker with better logic than ispell
+brew "shellcheck"                               # Static analysis and lint tool, for (ba)sh scripts
+brew "sqlfluff"                                 # SQL linter and auto-formatter for Humans
+brew "yamllint"                                 # Linter for YAML files
+
+################################################################################
+# Fun
+################################################################################
+
+cask "anki"                                     # Memory training application
+cask "spotify"                                  # Spotify client
+cask "dwarf-fortress"                           # Single-player fantasy game
+
+brew "nethack"                                  # Single-player roguelike video game
+brew "stone-soup"                               # Dungeon Crawl Stone Soup: a roguelike game
+brew "brogue"                                   # Roguelike game
+brew "angband"                                  # Dungeon exploration game
+brew "cataclysm"                                # For/variant of Cataclysm Roguelike
