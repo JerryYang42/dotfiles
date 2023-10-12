@@ -1,5 +1,7 @@
 [core]
-	editor = code --wait
+	editor = vim
 [user]
 	email = j.yang5@elsevier.com
 	name = Jinjie Yang
+[alias]
+	co = checkout
