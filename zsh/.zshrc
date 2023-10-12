@@ -464,16 +464,285 @@ compdef "_arguments \
     rr-lambda-backlog
 # >>> conda initialize >>>
 # !! Contents within this block are managed by 'conda init' !!
-__conda_setup="$('/Users/yangj8/miniconda3/bin/conda' 'shell.zsh' 'hook' 2> /dev/null)"
-if [ $? -eq 0 ]; then
-    eval "$__conda_setup"
-else
-    if [ -f "/Users/yangj8/miniconda3/etc/profile.d/conda.sh" ]; then
-        . "/Users/yangj8/miniconda3/etc/profile.d/conda.sh"
-    else
-        export PATH="/Users/yangj8/miniconda3/bin:$PATH"
-    fi
-fi
-unset __conda_setup
+# __conda_setup="$('/Users/yangj8/miniconda3/bin/conda' 'shell.zsh' 'hook' 2> /dev/null)"
+# if [ $? -eq 0 ]; then
+#     eval "$__conda_setup"
+# else
+#     if [ -f "/Users/yangj8/miniconda3/etc/profile.d/conda.sh" ]; then
+#         . "/Users/yangj8/miniconda3/etc/profile.d/conda.sh"
+#     else
+#         export PATH="/Users/yangj8/miniconda3/bin:$PATH"
+#     fi
+# fi
+# unset __conda_setup
 # <<< conda initialize <<<
 
+
+# k9: https://github.com/stubillwhite/dotfiles/blob/7ae97d03043f18c7b74051908ff788b75737b77c/zsh/.zshrc.ELSLAPM-156986#L86-L137
+
+function recs-get-k8s() {
+    if [[ $# -ne 2 ]] ; then
+        echo "Usage: recs-get-k8s (dev|live) (util|main)"
+    else
+        local recsEnv=$1
+        local recsSubEnv=$2
+        aws s3 cp s3://com-elsevier-recs-${recsEnv}-certs/eks/recs-eks-${recsSubEnv}-${recsEnv}.conf ~/.kube/
+        export KUBECONFIG=~/.kube/recs-eks-${recsSubEnv}-${recsEnv}.conf
+
+        # TODO: We need to upgrade our K8s config
+        # https://github.com/fluxcd/flux2/issues/2817
+        echo
+        echo 'WARNING: My tools are running with newer clients than our servers; patching protocol'
+        local oldProtocol="client.authentication.k8s.io\/v1alpha1"
+        local newProtocol="client.authentication.k8s.io\/v1beta1"
+        gsed -i "s/${oldProtocol}/${newProtocol}/g" $HOME/.kube/recs-eks-${recsSubEnv}-${recsEnv}.conf
+    fi
+}
+compdef "_arguments \
+    '1:environment arg:(dev live)' \
+    '2:sub-environment arg:(util main)'" \
+    recs-get-k8s
+
+function recs-k9s-dev() {
+    aws-recs-dev
+    recs-get-k8s dev main
+    k9s
+}
+
+function recs-k9s-dev-util() {
+    aws-recs-dev
+    recs-get-k8s dev util
+    k9s
+}
+
+function recs-k9s-staging() {
+    aws-recs-dev
+    recs-get-k8s staging main
+    k9s
+}
+
+function recs-k9s-live() {
+    aws-recs-prod
+    recs-get-k8s live main
+    k9s
+}
+
+function recs-k9s-live-util() {
+    aws-recs-prod
+    recs-get-k8s live util
+    k9s
+}
+
+export PYENV_ROOT="$HOME/.pyenv"
+command -v pyenv >/dev/null || export PATH="$PYENV_ROOT/bin:$PATH"
+eval "$(pyenv init -)"
+
+# Add PyCharm command line launcher, disbaling it as /Applications/PyCharm.app/Contents/MacOS/pycharm doesn't work
+# export PATH="/Applications/PyCharm.app/Contents/MacOS:$PATH"
+
+function install-java-certificate() {
+    if [[ $# -ne 1 ]] ; then
+        echo 'Usage: install-java-certificate FILE'
+        return 1
+    fi
+
+    local certificate=$1
+
+    local keystores=$(find /Library -name cacerts | grep JavaVirtualMachines)
+    while IFS= read -r keystore; do
+        echo
+        echo sudo keytool -importcert -file \
+            "${certificate}" -keystore "${keystore}" -alias Zscalar
+
+        # keytool -list -keystore "${keystore}" | grep -i zscalar
+    done <<< "${keystores}"
+}
+
+
+# Git                               {{{2
+# ======================================
+
+source /opt/homebrew/bin/env_parallel.zsh
+
+export GIT_TRUNK=main
+
+function git-set-trunk() {
+    if [[ $# -ne 1 ]] ; then
+        echo 'Usage: git-set-trunk GIT_TRUNK'
+        return 1
+    fi
+
+    export GIT_TRUNK=$1
+    echo "GIT_TRUNK set to ${GIT_TRUNK}"
+}
+compdef "_arguments \
+    '1:branch arg:(main master)'" \
+    git-set-trunk
+
+# For each directory within the current directory, if the directory is a Git
+# repository then execute the supplied function 
+function git-for-each-repo() {
+    setopt local_options glob_dots
+    for fnam in *; do
+        if [[ -d $fnam ]]; then
+            pushd "$fnam" > /dev/null || return 1
+            if git rev-parse --git-dir > /dev/null 2>&1; then
+                "$@"
+            fi
+            popd > /dev/null || return 1
+        fi
+    done
+}
+
+# For each directory within the current directory, if the directory is a Git
+# repository then execute the supplied function in parallel
+function git-for-each-repo-parallel() {
+    local dirs=$(find . -type d -maxdepth 1)
+
+    echo "$dirs" \
+        | env_parallel --env "$1" -j20 \
+            "
+            pushd {} > /dev/null;                               \
+            if git rev-parse --git-dir > /dev/null 2>&1; then   \
+                $@;                                             \
+            fi;                                                 \
+            popd > /dev/null;                                   \
+            "
+}
+
+# For each repo within the current directory, pull the repo
+function git-repos-pull() {
+    pull-repo() {
+        echo "Pulling $(basename $PWD)"
+        git pull -r --autostash
+        echo
+    }
+
+    git-for-each-repo-parallel pull-repo 
+    git-repos-status
+}
+
+# For each repo within the current directory, fetch the repo
+function git-repos-fetch() {
+    local args=$*
+
+    fetch-repo() {
+        echo "Fetching $(basename $PWD)"
+        git fetch ${args}
+        echo
+    }
+
+    git-for-each-repo-parallel fetch-repo 
+    git-repos-status
+}
+
+# Parse Git status into a Zsh associative array
+function git-parse-repo-status() {
+    local aheadAndBehind
+    local ahead=0
+    local behind=0
+    local added=0
+    local modified=0
+    local deleted=0
+    local renamed=0
+    local untracked=0
+    local stashed=0
+
+    branch=$(git rev-parse --abbrev-ref HEAD 2> /dev/null)
+    ([[ $? -ne 0 ]] || [[ -z "$branch" ]]) && branch="unknown"
+
+    aheadAndBehind=$(git status --porcelain=v1 --branch | perl -ne '/\[(.+)\]/ && print $1' )
+    ahead=$(echo $aheadAndBehind | perl -ne '/ahead (\d+)/ && print $1' )
+    [[ -z "$ahead" ]] && ahead=0
+    behind=$(echo $aheadAndBehind | perl -ne '/behind (\d+)/ && print $1' )
+    [[ -z "$behind" ]] && behind=0
+
+    # See https://git-scm.com/docs/git-status for output format
+    while read -r line; do
+      # echo "$line"
+      echo "$line" | gsed -r '/^[A][MD]? .*/!{q1}'   > /dev/null && (( added++ ))
+      echo "$line" | gsed -r '/^[M][MD]? .*/!{q1}'   > /dev/null && (( modified++ ))
+      echo "$line" | gsed -r '/^[D][RCDU]? .*/!{q1}' > /dev/null && (( deleted++ ))
+      echo "$line" | gsed -r '/^[R][MD]? .*/!{q1}'   > /dev/null && (( renamed++ ))
+      echo "$line" | gsed -r '/^[\?][\?] .*/!{q1}'   > /dev/null && (( untracked++ ))
+    done < <(git status --porcelain)
+
+    stashed=$(git stash list | wc -l)
+
+    unset gitRepoStatus
+    typeset -gA gitRepoStatus
+    gitRepoStatus[branch]=$branch
+    gitRepoStatus[ahead]=$ahead
+    gitRepoStatus[behind]=$behind
+    gitRepoStatus[added]=$added
+    gitRepoStatus[modified]=$modified
+    gitRepoStatus[deleted]=$deleted
+    gitRepoStatus[renamed]=$renamed
+    gitRepoStatus[untracked]=$untracked
+    gitRepoStatus[stashed]=$stashed
+}
+
+# For each repo within the current directory, display the respository status
+function git-repos-status() {
+    display-status() {
+        git-parse-repo-status
+        repo=$(basename $PWD) 
+
+        local branchColor="${COLOR_RED}"
+        if [[ "$gitRepoStatus[branch]" =~ (^main$) ]]; then
+            branchColor="${COLOR_GREEN}"
+        fi
+        local branch="${branchColor}$gitRepoStatus[branch]${COLOR_NONE}"
+
+        local sync="${COLOR_GREEN}in-sync${COLOR_NONE}"
+        if (( $gitRepoStatus[ahead] > 0 )) && (( $gitRepoStatus[behind] > 0 )); then
+            sync="${COLOR_RED}ahead/behind${COLOR_NONE}"
+        elif (( $gitRepoStatus[ahead] > 0 )); then
+            sync="${COLOR_RED}ahead${COLOR_NONE}"
+        elif (( $gitRepoStatus[behind] > 0 )); then
+            sync="${COLOR_RED}behind${COLOR_NONE}"
+        fi
+
+        local dirty="${COLOR_GREEN}clean${COLOR_NONE}"
+        (($gitRepoStatus[added] + $gitRepoStatus[modified] + $gitRepoStatus[deleted] + $gitRepoStatus[renamed] > 0)) && dirty="${COLOR_RED}dirty${COLOR_NONE}"
+
+        print "${branch},${sync},${dirty},${repo}\n"
+    }
+
+    git-for-each-repo display-status | column -t -s ','
+}
+
+# For each repo within the current directory, display whether the repo contains
+# unmerged branches locally
+function git-repos-unmerged-branches() {
+    display-unmerged-branches() {
+        local cmd="git unmerged-branches"
+        unmergedBranches=$(eval "$cmd") 
+        if [[ $unmergedBranches = *[![:space:]]* ]]; then
+            echo "$fnam"
+            eval "$cmd"
+            echo
+        fi
+    }
+
+    git-for-each-repo display-unmerged-branches
+}
+
+# For each repo within the current directory, display whether the repo contains
+# unmerged branches locally and remote
+function git-repos-unmerged-branches-all() {
+    display-unmerged-branches-all() {
+        local cmd="git unmerged-branches-all"
+        unmergedBranches=$(eval "$cmd") 
+        if [[ $unmergedBranches = *[![:space:]]* ]]; then
+            echo "$fnam"
+            eval "$cmd"
+            echo
+        fi
+    }
+
+    git-for-each-repo display-unmerged-branches-all
+}
+
+# Add Visual Studio Code (code)
+export PATH="$PATH:/Applications/Visual Studio Code.app/Contents/Resources/app/bin"
