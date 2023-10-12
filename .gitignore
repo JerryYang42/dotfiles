@@ -6,3 +6,4 @@
 /homebrew/Brewfile.*.lock.json
 .gitconfig.local
 **/*.no-commit
+*.DS_Store
