@@ -3,6 +3,7 @@ export JAVA_HOME=/Library/Java/JavaVirtualMachines/adoptopenjdk-8.jdk/Contents/H
 # AWS config
 alias aws-which="env | grep AWS | sort"
 alias aws-clear-variables="for i in \$(aws-which | cut -d= -f1,1 | paste -); do unset \$i; done"
+alias aws-profile="aws sts get-caller-identity"
 
 # AWS SSO login via IDC
 function aws-sso-login() {
