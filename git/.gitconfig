@@ -5,3 +5,5 @@
 	name = Jinjie Yang
 [alias]
 	co = checkout
+[init]
+	defaultBranch = main
