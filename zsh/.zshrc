@@ -4,24 +4,40 @@ export JAVA_HOME=/Library/Java/JavaVirtualMachines/adoptopenjdk-8.jdk/Contents/H
 alias aws-which="env | grep AWS | sort"
 alias aws-clear-variables="for i in \$(aws-which | cut -d= -f1,1 | paste -); do unset \$i; done"
 
-function aws-switch-role() {
-    declare roleARN=$1 profile=$2
+# AWS SSO login via IDC
+function aws-sso-login() {
+    local profile=$1
 
-    export username=yangj8@science.regn.net
-    LOGIN_OUTPUT="$(aws-adfs login --adfs-host federation.reedelsevier.com --region us-east-1 --session-duration 14400 --role-arn $roleARN --env --profile $profile --printenv | grep export)"
-    AWS_ENV="$(echo $LOGIN_OUTPUT | grep export)"
-    eval $AWS_ENV
-    export AWS_REGION=us-east-1
+    aws sso login --profile ${profile}
+
+    local ssoCachePath=~/.aws/sso/cache
+
+    local ssoAccountId=$(aws configure get --profile ${profile} sso_account_id)
+    local ssoRoleName=$(aws configure get --profile ${profile} sso_role_name)
+    local mostRecentSSOLogin=$(ls -t1 ${ssoCachePath}/*.json | head -n 1)
+
+    local response=$(aws sso get-role-credentials \
+        --role-name ${ssoRoleName} \
+        --account-id ${ssoAccountId} \
+        --access-token "$(jq -r '.accessToken' ${mostRecentSSOLogin})" \
+        --region eu-west-1
+    )
+
+    local accessKeyId=$(echo "${response}" | jq -r '.roleCredentials | .accessKeyId')
+    local secretAccessKey=$(echo "${response}" | jq -r '.roleCredentials | .secretAccessKey')
+    local sessionToken=$(echo "${response}" | jq -r '.roleCredentials | .sessionToken')
+
+    export AWS_ACCESS_KEY_ID="${accessKeyId}"
+    export AWS_SECRET_ACCESS_KEY="${secretAccessKey}"
+    export AWS_SESSION_TOKEN="${sessionToken}"
+    export AWS_DEFAULT_REGION="us-east-1"
+    export AWS_REGION="us-east-1"
+
     aws-which
 }
 
-function aws-developer-role() {
-    declare accountId=$1 role=$2 profile=$3
-    aws-switch-role "arn:aws:iam::${accountId}:role/${role}" "${profile}"
-}
-
-alias aws-recs-dev="aws-developer-role 975165675840 ADFS-Developer aws-rap-recommendersdev"
-alias aws-recs-prod="aws-developer-role 589287149623 ADFS-Developer aws-rap-recommendersprod"
+alias aws-recs-dev="aws-clear-variables && aws-sso-login recs-dev"
+alias aws-recs-live="aws-clear-variables && aws-sso-login recs-live"
 
 export username=yangj8@science.regn.net
 
