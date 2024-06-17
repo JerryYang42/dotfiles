@@ -4,6 +4,19 @@ function list_git_repos() {
     find "$1" -type d -name '.git' 2>/dev/null | sed -E 's|/\.git$||'
 }
 
+function filter_git_repos() {
+    local query="$1"
+    local filtered_repos=()
+
+    for repo in "${git_repos[@]}"; do
+        if [[ $(basename "$repo") == *"$query"* ]]; then
+            filtered_repos+=("$repo")
+        fi
+    done
+
+    echo "${filtered_repos[@]}"
+}
+
 echo "Listing Git Repositories on Disk:"
 read -p "Enter the starting path (press Enter for current directory): " starting_path
 
@@ -20,10 +33,15 @@ fi
 display_lines=$(( $(tput lines) / 2 ))
 
 selected_index=0
+search_query=""
 
 while true; do
     clear
-    echo "Select a Git Repository (use arrow keys to navigate, press Enter to select):"
+    echo "Select a Git Repository (use arrow keys to navigate, press Enter to select, type to search):"
+
+    if [ -n "$search_query" ]; then
+        git_repos=($(filter_git_repos "$search_query"))
+    fi
 
     for ((i=0; i<${#git_repos[@]}; i++)); do
         if [ $i -eq $selected_index ]; then
@@ -51,6 +69,9 @@ while true; do
             clear
             echo -e "\nYou selected: ${git_repos[$selected_index]}"
             break
+            ;;
+        *)  # Other key (for searching)
+            search_query="$search_query$key"
             ;;
     esac
 done
