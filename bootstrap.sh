@@ -15,8 +15,9 @@ FILES=(
     "git/.gitconfig"
     "q/.qrc"
     "ripgrep/.ripgreprc"
-    "zsh/.zshrc"
     "zsh/.zprofile"
+    "zsh/.zshrc"
+    "zsh/.zshenv"
 )
 
 # Files to link to in $HOME/.config

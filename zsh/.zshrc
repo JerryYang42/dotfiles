@@ -1,4 +1,21 @@
-export JAVA_HOME=/Library/Java/JavaVirtualMachines/adoptopenjdk-8.jdk/Contents/Home
+# vim:fdm=marker
+
+# Zsh initialisation                                                        {{{1
+# ==============================================================================
+
+# Completion system                 {{{2
+# ======================================
+
+fpath=(~/.zsh-completion $fpath)
+
+# See https://gist.github.com/ctechols/ca1035271ad134841284
+
+# Only regenerate .zcompdump once every day
+autoload -Uz compinit
+for dump in ~/.zcompdump(N.mh+24); do
+    compinit
+done
+compinit -C
 
 # AWS config
 alias aws-which="env | grep AWS | sort"
@@ -335,7 +352,7 @@ function rr-recent-recommendations() {
 
     awslogs get --no-group --no-stream --timestamp "/aws/lambda/recs-reviewers-recommender-lambda-${recsEnv}" -f 'ManuscriptService' \
         | gsed -r 's/.* Manuscript id: (.+)$/\1/g' \
-        | grep -e '^[^ ]\+$'
+        | grep -v ' '
 }
 compdef "_arguments \
     '1:environment arg:(dev staging live)'" \
@@ -550,6 +567,13 @@ function recs-k9s-live-util() {
     k9s
 }
 
+
+# Python                                                                    {{{1
+# ==============================================================================
+
+# set trusted hosts for pip install 
+alias pipinstall="pip install --trusted-host files.pythonhosted.org --trusted-host pypi.org --trusted-host pypi.python.org --default-timeout=1000"
+
 export PYENV_ROOT="$HOME/.pyenv"
 command -v pyenv >/dev/null || export PATH="$PYENV_ROOT/bin:$PATH"
 eval "$(pyenv init -)"
@@ -763,3 +787,49 @@ function git-repos-unmerged-branches-all() {
 
 # Add Visual Studio Code (code)
 export PATH="$PATH:/Applications/Visual Studio Code.app/Contents/Resources/app/bin"
+
+# Java
+# export JAVA_HOME=/Library/Java/JavaVirtualMachines/temurin-8.jdk/Contents/Home
+jdk() {
+    version=$1
+    export JAVA_HOME=$(/usr/libexec/java_home -v"$version");
+    java -version
+}
+
+# Switch Java version
+function java-version() {
+    if [[ $# -ne 1 ]] ; then
+        echo 'Usage: java-version JVM'
+        return 1
+    fi
+
+    export JAVA_HOME=/Library/Java/JavaVirtualMachines/${1}/Contents/Home/
+}
+compdef '_alternative \
+    "arguments:custom arg:(temurin-8.jdk temurin-11.jdk temurin-17.jdk temurin-20.jdk)"' \
+    java-version
+
+# Fetch rr recent recommendations
+function rr-recent-recommendations () {
+	if [[ $# -ne 1 ]]
+	then
+		gecho "Usage: rr-recent-recommendations (dev|staging|live)"
+		return 1
+	fi
+	local recsEnv="${1}"
+	aws-recs-login "${recsEnv}" > /dev/null
+	awslogs get --no-group --no-stream --timestamp "/aws/lambda/recs-reviewers-recommender-lambda-${recsEnv}" -f 'ManuscriptService' | gsed -r 's/.* Manuscript id: (.+)$/\1/g' | grep -e '^[^ ]\+$'
+}
+
+
+# Fetch k8s credentials
+getk8s() {
+    aws s3 cp s3://com-elsevier-recs-$1-certs/eks/recs-eks-main-$1.conf ~/.kube/
+    export KUBECONFIG=~/.kube/recs-eks-main-$1.conf
+}
+
+# Add IntelliJ Community Edition to PATH
+export PATH="$PATH:/Applications/IntelliJ IDEA CE.app/Contents/MacOS"
+
+# Created by `pipx` on 2024-05-14 11:45:54
+export PATH="$PATH:/Users/yangj8/.local/bin"
