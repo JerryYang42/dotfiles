@@ -175,6 +175,9 @@ brew "shellcheck"                               # Static analysis and lint tool,
 brew "sqlfluff"                                 # SQL linter and auto-formatter for Humans
 brew "yamllint"                                 # Linter for YAML files
 
+# postgresql
+brew "postgresql"                               # Object-relational database system
+
 ################################################################################
 # Fun
 ################################################################################
