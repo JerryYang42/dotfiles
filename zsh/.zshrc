@@ -33,11 +33,11 @@ function aws-sso-login() {
     local ssoAccountId=$(aws configure get --profile ${profile} sso_account_id)
     local ssoRoleName=$(aws configure get --profile ${profile} sso_role_name)
     local mostRecentSSOLogin=$(ls -t1 ${ssoCachePath}/*.json | head -n 1)
-
+    local ssoCacheAccessToken=$(jq -r '.accessToken' ${mostRecentSSOLogin})
     local response=$(aws sso get-role-credentials \
         --role-name ${ssoRoleName} \
         --account-id ${ssoAccountId} \
-        --access-token "$(jq -r '.accessToken' ${mostRecentSSOLogin})" \
+        --access-token ${ssoCacheAccessToken} \
         --region eu-west-1
     )
 
@@ -56,6 +56,8 @@ function aws-sso-login() {
 
 alias aws-recs-dev="aws-clear-variables && aws-sso-login recs-dev"
 alias aws-recs-live="aws-clear-variables && aws-sso-login recs-live"
+
+alias aws-ls-profiles="aws configure list-profiles"
 
 export username=yangj8@science.regn.net
 
@@ -496,20 +498,6 @@ HEREDOC
 compdef "_arguments \
     '1:environment arg:(dev staging live)'" \
     rr-lambda-backlog
-# >>> conda initialize >>>
-# !! Contents within this block are managed by 'conda init' !!
-# __conda_setup="$('/Users/yangj8/miniconda3/bin/conda' 'shell.zsh' 'hook' 2> /dev/null)"
-# if [ $? -eq 0 ]; then
-#     eval "$__conda_setup"
-# else
-#     if [ -f "/Users/yangj8/miniconda3/etc/profile.d/conda.sh" ]; then
-#         . "/Users/yangj8/miniconda3/etc/profile.d/conda.sh"
-#     else
-#         export PATH="/Users/yangj8/miniconda3/bin:$PATH"
-#     fi
-# fi
-# unset __conda_setup
-# <<< conda initialize <<<
 
 
 # k9: https://github.com/stubillwhite/dotfiles/blob/7ae97d03043f18c7b74051908ff788b75737b77c/zsh/.zshrc.ELSLAPM-156986#L86-L137
@@ -562,42 +550,16 @@ function recs-k9s-live() {
 }
 
 function recs-k9s-live-util() {
-    aws-recs-prod
+    aws-recs-pr
     recs-get-k8s live util
     k9s
 }
-
 
 # Python                                                                    {{{1
 # ==============================================================================
 
 # set trusted hosts for pip install 
 alias pipinstall="pip install --trusted-host files.pythonhosted.org --trusted-host pypi.org --trusted-host pypi.python.org --default-timeout=1000"
-
-export PYENV_ROOT="$HOME/.pyenv"
-command -v pyenv >/dev/null || export PATH="$PYENV_ROOT/bin:$PATH"
-eval "$(pyenv init -)"
-
-# Add PyCharm command line launcher, disbaling it as /Applications/PyCharm.app/Contents/MacOS/pycharm doesn't work
-# export PATH="/Applications/PyCharm.app/Contents/MacOS:$PATH"
-
-function install-java-certificate() {
-    if [[ $# -ne 1 ]] ; then
-        echo 'Usage: install-java-certificate FILE'
-        return 1
-    fi
-
-    local certificate=$1
-
-    local keystores=$(find /Library -name cacerts | grep JavaVirtualMachines)
-    while IFS= read -r keystore; do
-        echo
-        echo sudo keytool -importcert -file \
-            "${certificate}" -keystore "${keystore}" -alias Zscalar
-
-        # keytool -list -keystore "${keystore}" | grep -i zscalar
-    done <<< "${keystores}"
-}
 
 
 # Git                               {{{2
@@ -785,10 +747,99 @@ function git-repos-unmerged-branches-all() {
     git-for-each-repo display-unmerged-branches-all
 }
 
-# Add Visual Studio Code (code)
+
+# For a new repo, uploaded to GitHub, set the origin
+function make-git-repo() {
+    local repo_name=""
+    local is_private=false
+
+    # Parse arguments
+    while [[ "$#" -gt 0 ]]; do
+        case $1 in
+            -p|--private) is_private=true ;;
+            *) 
+                if [ -z "$repo_name" ]; then
+                    repo_name="$1"
+                else
+                    echo "Unknown parameter passed: $1"
+                    return 1
+                fi
+                ;;
+        esac
+        shift
+    done
+
+    # Check if repo name was provided
+    if [ -z "$repo_name" ]; then
+        echo "Please provide a repository name."
+        return 1
+    fi
+
+    # Construct the GitHub URL
+    # Get the GitHub username from Git config or environment variable
+    local github_username=$(git config --global github.user || echo "${GITHUB_USERNAME:-}")
+    # Check if we have a GitHub username
+    if [ -z "$github_username" ]; then
+        echo "Error: GitHub username not found. Please set it using 'git config --global github.user YOUR_USERNAME' or set the GITHUB_USERNAME environment variable."
+        return 1
+    fi
+    # GitHub URL (SSH format)
+    local github_ssh="git@github.com:$github_username/$repo_name.git"
+
+    # Print out the GitHub remote and ask for consent
+    echo "This script will create a new $([ "$is_private" = true ] && echo "private" || echo "public") repository named '$repo_name' and push it to:"
+    echo "$github_ssh"
+    echo -n "Do you want to continue? (y/n) "
+    read REPLY
+    echo
+    if [[ ! $REPLY =~ ^[Yy]$ ]]
+    then
+        echo "Operation cancelled."
+        return 1
+    fi
+
+    # Create the directory and navigate into it
+    mkdir "$repo_name" && cd "$repo_name" || return 1
+
+    # Initialize the Git repository
+    git init
+
+    # Create a README file
+    echo "# $repo_name" > README.md
+
+    # Add the README file to the repository
+    git add README.md
+
+    # Commit the changes
+    git commit -m "Initial commit"
+
+    # Create the repository on GitHub using the GitHub CLI and push the local changes
+    if [ "$is_private" = true ]; then
+        gh repo create "$repo_name" --private --source=. --remote=origin --push
+    else
+        gh repo create "$repo_name" --public --source=. --remote=origin --push
+    fi
+
+    echo "Repository $repo_name created and pushed to GitHub."
+
+    # Open the repository URL in the default browser
+    local github_url="https://github.com/$github_username/$repo_name.git"
+    case "$(uname -s)" in
+        Darwin*)    open "$github_url" ;;
+        Linux*)     xdg-open "$github_url" ;;
+        CYGWIN*|MINGW32*|MSYS*|MINGW*) start "$github_url" ;;
+        *)          echo "Unsupported operating system. Please open $github_url manually." ;;
+    esac
+}
+
+
+# Visual Studio Code                {{{2
+# ======================================
 export PATH="$PATH:/Applications/Visual Studio Code.app/Contents/Resources/app/bin"
 
-# Java
+
+# Java                                                                      {{{1
+# ==============================================================================
 # export JAVA_HOME=/Library/Java/JavaVirtualMachines/temurin-8.jdk/Contents/Home
 jdk() {
     version=$1
@@ -809,17 +860,8 @@ compdef '_alternative \
     "arguments:custom arg:(temurin-8.jdk temurin-11.jdk temurin-17.jdk temurin-20.jdk)"' \
     java-version
 
-# Fetch rr recent recommendations
-function rr-recent-recommendations () {
-	if [[ $# -ne 1 ]]
-	then
-		gecho "Usage: rr-recent-recommendations (dev|staging|live)"
-		return 1
-	fi
-	local recsEnv="${1}"
-	aws-recs-login "${recsEnv}" > /dev/null
-	awslogs get --no-group --no-stream --timestamp "/aws/lambda/recs-reviewers-recommender-lambda-${recsEnv}" -f 'ManuscriptService' | gsed -r 's/.* Manuscript id: (.+)$/\1/g' | grep -e '^[^ ]\+$'
-}
+# Default Java 8
+java-version temurin-8.jdk
 
 
 # Fetch k8s credentials
@@ -831,5 +873,62 @@ getk8s() {
 # Add IntelliJ Community Edition to PATH
 export PATH="$PATH:/Applications/IntelliJ IDEA CE.app/Contents/MacOS"
 
-# Created by `pipx` on 2024-05-14 11:45:54
-export PATH="$PATH:/Users/yangj8/.local/bin"
+
+# Zscalar                                                                   {{{1
+# ==============================================================================
+export SSL_CERT_FILE=~/zscalar/ZscalerRootCertificate-2048-SHA256.crt
+# export SSL_CERT_FILE=/usr/local/etc/openssl@3/certs
+# export SSL_CERT_FILE="${SSL_CERT_FILE}"        # openssl
+# export REQUESTS_CA_BUNDLE="${SSL_CERT_FILE}"   # requests
+# export AWS_CA_BUNDLE="${SSL_CERT_FILE}"        # botocore
+# export CURL_CA_BUNDLE="${SSL_CERT_FILE}"       # curl
+# export HTTPLIB2_CA_CERTS="${SSL_CERT_FILE}"    # httplib2
+# export NODE_EXTRA_CA_CERTS="${SSL_CERT_FILE}"  # node
+
+function install-java-certificate() {
+    if [[ $# -ne 1 ]] ; then
+        echo 'Usage: install-java-certificate FILE'
+        return 1
+    fi
+
+    local certificate=$1
+
+    local keystores=$(find /Library -name cacerts | grep JavaVirtualMachines)
+    while IFS= read -r keystore; do
+        echo
+        echo sudo keytool -importcert -file \
+            "${certificate}" -keystore "${keystore}" -alias Zscalar
+
+        # keytool -list -keystore "${keystore}" | grep -i zscalar
+    done <<< "${keystores}"
+}
+
+
+# Homebrew                                                                  {{{1
+# ==============================================================================
+
+if [[ -x /opt/homebrew/bin/brew ]]; then
+    eval "$(/opt/homebrew/bin/brew shellenv)"
+else
+    echo "Error: Homebrew is not installed or not found in the expected location." >&2
+    echo "Please install Homebrew or check its installation path." >&2
+    echo "Visit https://brew.sh for installation instructions." >&2
+fi
+
+
+# Recs                                                                      {{{1
+# ==============================================================================
+# Reviewer Recommender              {{{2
+# ======================================
+
+# Fetch rr recent recommendations
+function rr-recent-recommendations () {
+	if [[ $# -ne 1 ]]
+	then
+		gecho "Usage: rr-recent-recommendations (dev|staging|live)"
+		return 1
+	fi
+	local recsEnv="${1}"
+	aws-recs-login "${recsEnv}" > /dev/null
+	awslogs get --no-group --no-stream --timestamp "/aws/lambda/recs-reviewers-recommender-lambda-${recsEnv}" -f 'ManuscriptService' | gsed -r 's/.* Manuscript id: (.+)$/\1/g' | grep -e '^[^ ]\+$'
+}
