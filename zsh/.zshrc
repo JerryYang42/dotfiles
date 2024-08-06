@@ -497,6 +497,7 @@ compdef "_arguments \
 
 # k9: https://github.com/stubillwhite/dotfiles/blob/7ae97d03043f18c7b74051908ff788b75737b77c/zsh/.zshrc.ELSLAPM-156986#L86-L137
 
+
 function recs-get-k8s() {
     if [[ $# -ne 2 ]] ; then
         echo "Usage: recs-get-k8s (dev|live) (util|main)"
@@ -504,15 +505,6 @@ function recs-get-k8s() {
         local recsEnv=$1
         local recsSubEnv=$2
         aws s3 cp s3://com-elsevier-recs-${recsEnv}-certs/eks/recs-eks-${recsSubEnv}-${recsEnv}.conf ~/.kube/
-        export KUBECONFIG=~/.kube/recs-eks-${recsSubEnv}-${recsEnv}.conf
-
-        # TODO: We need to upgrade our K8s config
-        # https://github.com/fluxcd/flux2/issues/2817
-        echo
-        echo 'WARNING: My tools are running with newer clients than our servers; patching protocol'
-        local oldProtocol="client.authentication.k8s.io\/v1alpha1"
-        local newProtocol="client.authentication.k8s.io\/v1beta1"
-        gsed -i "s/${oldProtocol}/${newProtocol}/g" $HOME/.kube/recs-eks-${recsSubEnv}-${recsEnv}.conf
     fi
 }
 compdef "_arguments \
@@ -520,34 +512,39 @@ compdef "_arguments \
     '2:sub-environment arg:(util main)'" \
     recs-get-k8s
 
-function recs-k9s-dev() {
+function k9s-recs-dev-main() {
     aws-recs-dev
     recs-get-k8s dev main
-    k9s
+    export KUBECONFIG=~/.kube/recs-eks-dev-main.conf
+    k9s; unset KUBECONFIG
 }
 
-function recs-k9s-dev-util() {
+function k9s-recs-dev-util() {
     aws-recs-dev
     recs-get-k8s dev util
-    k9s
+    export KUBECONFIG=~/.kube/recs-eks-dev-util.conf
+    k9s; unset KUBECONFIG
 }
 
-function recs-k9s-staging() {
+function k9s-recs-staging() {
     aws-recs-dev
     recs-get-k8s staging main
-    k9s
+    export KUBECONFIG=~/.kube/recs-eks-staging-main.conf
+    k9s; unset KUBECONFIG
 }
 
-function recs-k9s-live() {
-    aws-recs-prod
+function k9s-recs-live() {
+    aws-recs-live
     recs-get-k8s live main
-    k9s
+    export KUBECONFIG=~/.kube/recs-eks-live-main.conf
+    k9s; unset KUBECONFIG
 }
 
 function recs-k9s-live-util() {
-    aws-recs-prod
+    aws-recs-live
     recs-get-k8s live util
-    k9s
+    export KUBECONFIG=~/.kube/recs-eks-live-util.conf
+    k9s; unset KUBECONFIG
 }
 
 export PYENV_ROOT="$HOME/.pyenv"
