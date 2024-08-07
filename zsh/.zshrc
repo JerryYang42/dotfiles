@@ -20,11 +20,78 @@ compinit -C
 # AWS config
 alias aws-which="env | grep AWS | sort"
 alias aws-clear-variables="for i in \$(aws-which | cut -d= -f1,1 | paste -); do unset \$i; done"
-alias aws-profile="aws sts get-caller-identity"
+# alias aws-identity="aws sts get-caller-identity"
+function aws-identity() {
+    aws sts get-caller-identity
+}
+function aws-ls-profiles() {
+    aws configure list-profiles | grep -v '^default$'
+}
+
+# function aws-is-authenticated() {
+#     [[ -n $(aws-which) ]]
+# }
+
+function aws-is-authenticated() {
+    # First, check if any AWS environment variables are set
+    if [[ -z "$(aws-which)" ]]; then
+        echo "AWS environment variables are not set." >&2
+        return 1 # Not authenticated
+    fi
+
+    # If no AWS env vars, then check authentication
+    if [[ -n "$(aws sts get-caller-identity 2>/dev/null)" ]]; then
+        return 0  # Authenticated
+    else
+        return 1  # Not authenticated
+    fi
+}
+
+function aws-is-authenticated-as() {
+    if ! aws-is-authenticated >/dev/null 2>&1; then
+        echo "AWS is not authenticated." >&2;
+        return 1; 
+    fi
+
+    if [[ $# -ne 1 ]]; then
+        echo "Usage: aws-is-authenticated-as PROFILE" >&2;
+        return 1
+    fi
+
+    local profile=$1
+
+    local profileAccountId=$(aws configure get --profile ${profile} sso_account_id)
+    local profileRoleName=$(aws configure get --profile ${profile} sso_role_name)
+
+    local actualAccountId=$(aws-identity | jq -r ".Account")
+    local actualSaltedRoleName=$(aws-identity | jq -r ".Arn" | cut -d'/' -f2 | awk '{print $1}')
+
+    if [[ "${profileAccountId}" != "${actualAccountId}" ]]; then
+        echo "Error: Account ID mismatch. Expected ${profileAccountId}, got ${actualAccountId}." >&2; return 1; 
+    fi
+
+    if [[ "${actualSaltedRoleName}" != *"${profileRoleName}"* ]]; then
+        echo "Error: Role name mismatch. Expected ${profileRoleName}, got ${actualSaltedRoleName}." >&2; return 1; 
+    fi
+
+    return 0;
+}
 
 # AWS SSO login via IDC
 function aws-sso-login() {
+
+    if [[ $# -ne 1 ]]; then
+        echo "Usage: aws-sso-login PROFILE"; return 1;
+    fi
+
     local profile=$1
+
+    if aws-is-authenticated-as $profile; then 
+        echo "Already authenticated as ${profile}";
+        return 0;
+    else 
+        echo "Not authenticated as ${profile}";
+    fi
 
     aws sso login --profile ${profile}
 
@@ -54,10 +121,27 @@ function aws-sso-login() {
     aws-which
 }
 
-alias aws-recs-dev="aws-clear-variables && aws-sso-login recs-dev"
-alias aws-recs-live="aws-clear-variables && aws-sso-login recs-live"
+# alias aws-recs-dev="aws-clear-variables && aws-sso-login recs-dev"
+# alias aws-recs-dev="aws-sso-login recs-dev"
 
-alias aws-ls-profiles="aws configure list-profiles"
+function aws-recs-dev() {
+    if [[ "$1" == "-f" ]]; then
+        aws-clear-variables
+        shift  # Remove the -f from the arguments
+    fi
+    aws-sso-login recs-dev
+}
+
+# alias aws-recs-live="aws-clear-variables && aws-sso-login recs-live"
+# alias aws-recs-live="aws-sso-login recs-live"
+
+function aws-recs-live() {
+    if [[ "$1" == "-f" ]]; then
+        aws-clear-variables
+        shift  # Remove the -f from the arguments
+    fi
+    aws-sso-login recs-live
+}
 
 export username=yangj8@science.regn.net
 
@@ -550,6 +634,10 @@ function recs-k9s-live-util() {
     recs-get-k8s live util
     export KUBECONFIG=~/.kube/recs-eks-live-util.conf
     k9s; unset KUBECONFIG
+}
+
+function kube-ls-pods-live() {
+    kubectl get pods --all-namespaces
 }
 
 # Python                                                                    {{{1
