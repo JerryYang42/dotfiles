@@ -3,7 +3,6 @@ APPS_FOR_WORK=(
   "Google Chrome"
   "Microsoft Teams"
   "Microsoft Outlook"
-  "Microsoft OneNote"
   "Microsoft Teams"
   "Microsoft Visual Studio Code"
   "Terminal"
@@ -27,15 +26,12 @@ close-app () {
   osascript -e "quit app \"$1\""  # https://apple.stackexchange.com/questions/354954/how-can-i-quit-an-app-using-terminal
 }
 
-# close-app "Slack"
-
 close-apps () {
   for app in "${APPS_FOR_WORK[@]}"; do
     close-app "$app"
   done
 }
 
-# close-apps
 
 open-app () {
   if [ -z "$1" ]; then
@@ -47,17 +43,8 @@ open-app () {
   open -g -a "$app_name"
 }
 
-# open-app "Slack"
 
-# open-app-in-background-in-osascript-way () {
-#   if [ -z "$1" ]; then
-#     echo "Usage: open-app <app-name>"
-#     return 1
-#   fi
-#   osascript -e "tell application \"$1\" to launch" -e "tell application \"System Events\" to set visible of process \"$1\" to false"
-# }
-
-set-app-invisible-in-osascript-way () {
+open-app-in-background-in-osascript-way () {
   if [ -z "$1" ]; then
     echo "Usage: set-app-invisible-in-osascript-way <app-name>"
     return 1
@@ -82,10 +69,10 @@ EOF
 }
 
 open-apps () {
-  # open -a "Slack"
-  set-app-invisible-in-osascript-way Slack
+  open-app-in-background-in-osascript-way "Slack"
+  open-app-in-background-in-osascript-way "Microsoft Outlook"
+  open-app-in-background-in-osascript-way "Microsoft Teams"
 }
-open-apps
 
 
 # get-off-work() {
