@@ -43,12 +43,41 @@ remove-from-dock() {
     echo "Removed $app_name from the Dock and restarted the Dock."
 }
 
-remove-from-dock "Slack"
+add-to-dock() {
+    if [ $# -eq 0 ]; then
+        echo "Usage: add-to-dock <app_name> [position]"
+        return 1
+    fi
+
+    local app_name="$1"
+    local position="${2:-}"
+    local app_path="/Applications/${app_name}.app"
+
+    # Check if the app exists
+    if [ ! -d "$app_path" ]; then
+        echo "Error: $app_name not found in /Applications"
+        return 1
+    fi
+
+    # Add the app to the Dock
+    if [ -n "$position" ]; then
+        dockutil --add "$app_path" --position "$position" --no-restart
+    else
+        dockutil --add "$app_path" --no-restart
+    fi
+
+    # Restart the Dock to apply changes
+    killall Dock
+
+    echo "Added $app_name to the Dock and restarted the Dock."
+}
+
 
 close-apps () {
   for app in "${APPS_FOR_WORK[@]}"; do
     close-app "$app"
   done
+  remove-from-dock "Slack"
 }
 
 
@@ -91,6 +120,7 @@ open-apps () {
   open-app-in-background-in-osascript-way "Slack"
   open-app-in-background-in-osascript-way "Microsoft Outlook"
   open-app-in-background-in-osascript-way "Microsoft Teams"
+  add-to-dock "Slack" 1
 }
 
 
