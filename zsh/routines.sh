@@ -26,6 +26,25 @@ close-app () {
   osascript -e "quit app \"$1\""  # https://apple.stackexchange.com/questions/354954/how-can-i-quit-an-app-using-terminal
 }
 
+remove-from-dock() {
+    if [ $# -eq 0 ]; then
+        echo "Usage: remove_from_dock <app_name>"
+        return 1
+    fi
+
+    local app_name="$1"
+    
+    # Remove the app from the Dock
+    dockutil --remove "$app_name" --no-restart
+
+    # Restart the Dock to apply changes
+    killall Dock
+
+    echo "Removed $app_name from the Dock and restarted the Dock."
+}
+
+remove-from-dock "Slack"
+
 close-apps () {
   for app in "${APPS_FOR_WORK[@]}"; do
     close-app "$app"
