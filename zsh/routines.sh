@@ -49,13 +49,41 @@ open-app () {
 
 # open-app "Slack"
 
-open-Slack-in-background () {
-  osascript -e 'tell application "Slack" to launch' \
-            -e 'tell application "System Events" to set visible of process "Slack" to false'
+# open-app-in-background-in-osascript-way () {
+#   if [ -z "$1" ]; then
+#     echo "Usage: open-app <app-name>"
+#     return 1
+#   fi
+#   osascript -e "tell application \"$1\" to launch" -e "tell application \"System Events\" to set visible of process \"$1\" to false"
+# }
+
+set-app-invisible-in-osascript-way () {
+  if [ -z "$1" ]; then
+    echo "Usage: set-app-invisible-in-osascript-way <app-name>"
+    return 1
+  fi
+  
+  osascript <<EOF
+tell application "$1" to launch
+tell application "System Events"
+  repeat until exists (processes where name is "$1")
+      delay 0.5
+  end repeat
+  
+  repeat until (exists window 1 of process "$1")
+      delay 0.5
+  end repeat
+  
+  # Additional delay to ensure content is loaded
+  delay 2
+end tell
+tell application "System Events" to set visible of process "$1" to false
+EOF
 }
 
 open-apps () {
-  open-Slack-in-background
+  # open -a "Slack"
+  set-app-invisible-in-osascript-way Slack
 }
 open-apps
 
