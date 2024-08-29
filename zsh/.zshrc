@@ -958,6 +958,10 @@ getk8s() {
 # Add IntelliJ Community Edition to PATH
 export PATH="$PATH:/Applications/IntelliJ IDEA CE.app/Contents/MacOS"
 
+function idea() {
+    open -na "IntelliJ IDEA CE" --args "$@"  # https://stackoverflow.com/questions/57309605/how-to-run-intellij-idea-from-terminal-in-detached-mode
+}
+
 
 # Zscalar                                                                   {{{1
 # ==============================================================================
