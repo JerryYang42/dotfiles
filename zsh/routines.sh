@@ -3,7 +3,6 @@ APPS_FOR_WORK=(
   "Google Chrome"
   "Microsoft Teams"
   "Microsoft Outlook"
-  "Microsoft Teams"
   "Microsoft Visual Studio Code"
   "Terminal"
   "iTerm"
@@ -78,6 +77,8 @@ close-apps () {
     close-app "$app"
   done
   remove-from-dock "Slack"
+  remove-from-dock "Microsoft Outlook"
+  remove-from-dock "Microsoft Teams"
 }
 
 
@@ -98,6 +99,8 @@ open-app-in-background-in-osascript-way () {
     return 1
   fi
   
+  echo "Opening $1 in the background"
+
   osascript <<EOF
 tell application "$1" to launch
 tell application "System Events"
@@ -112,15 +115,23 @@ tell application "System Events"
   # Additional delay to ensure content is loaded
   delay 2
 end tell
+tell application "$1" to activate
 tell application "System Events" to set visible of process "$1" to false
 EOF
+
+echo "Opened $1 in the background"
 }
 
 open-apps () {
-  open-app-in-background-in-osascript-way "Slack"
-  open-app-in-background-in-osascript-way "Microsoft Outlook"
-  open-app-in-background-in-osascript-way "Microsoft Teams"
   add-to-dock "Slack" 1
+  add-to-dock "Microsoft Outlook" 2
+  add-to-dock "Microsoft Teams" 3
+  
+  # Run the following commands in parallel
+  open-app-in-background-in-osascript-way "Slack" &
+  open-app-in-background-in-osascript-way "Microsoft Outlook" &
+  open-app-in-background-in-osascript-way "Microsoft Teams" &  # something wrong with Teams openning, looping forever
+  wait  # Wait for all background jobs to finish
 }
 
 
