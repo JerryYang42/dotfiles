@@ -859,7 +859,7 @@ function git-repos-unmerged-branches-all() {
 
 
 # For a new repo, uploaded to GitHub, set the origin
-function make-git-repo() {
+function mk-git-repo() {
     local repo_name=""
     local is_private=false
 
