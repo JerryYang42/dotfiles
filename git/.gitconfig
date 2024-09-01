@@ -5,6 +5,7 @@
 	name = Jerry Yang
 [alias]
 	co = checkout
+	show-url = !git remote get-url origin | sed -e \"s/git@github.com:/https:\\/\\/github.com\\//\" | sed -e \"s/\\.git$//\" | sed -e \"s/$/\\/tree\\/$(git rev-parse --abbrev-ref HEAD)/\"
 [init]
 	defaultBranch = main
 [filter "lfs"]
