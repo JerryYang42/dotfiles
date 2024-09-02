@@ -3,6 +3,10 @@
 # Zsh initialisation                                                        {{{1
 # ==============================================================================
 
+# ENV VARs                          {{{2
+# ======================================
+source ~/.env
+
 # Completion system                 {{{2
 # ======================================
 
@@ -864,9 +868,14 @@ function convert-timestamp-from-iso8601-to-epoch () {
 
 function relative-time () {
     local timestamp=$1
-    local epoch=$(convert-timestamp-from-iso8601-to-epoch "$timestamp")
-    local now=$(date +%s)
-    local diff=$((now - epoch))
+
+    if [[ -z "$timestamp" ]]; then
+        echo "Requires a timestamp as an argument"
+        echo "Usage: relative-time TIMESTAMP"
+        return
+    fi
+
+    local diff=$(ddiff $start_date now -f "%S")
 
     if [[ $diff -lt 60 ]]; then
         echo "just now"
@@ -898,6 +907,56 @@ function gh-pr () {
     else
         echo "No pull requests found."
     fi
+}
+
+function gh-open-prs-mine () {
+    # Define the organization and author
+    ORG="elsevier-research"
+    AUTHOR="JerryYang42"
+
+    # Get the current date and subtract 6 months
+    SIX_MONTHS_AGO=$(date -v -6m +"%Y-%m-%dT%H:%M:%SZ")
+
+    # Fetch the PRs using GitHub GraphQL API
+    response=$(curl --silent --request POST \
+    --url https://api.github.com/graphql \
+    --header "Authorization: bearer $GITHUB_TOKEN" \
+    --header 'User-Agent: zsh-script' \
+    --data "{\"query\":\"{ search(query: \\\"org:$ORG author:$AUTHOR is:pr is:open\\\", type: ISSUE, first: 100) { edges { node { ... on PullRequest { title url createdAt updatedAt repository { name url } } } } } }\"}")
+
+    # Parse and filter the JSON response
+    echo "Updated At\t\tTITLE\t\tURL"
+    echo "$response" | jq -r --arg date "$SIX_MONTHS_AGO" '
+        .data.search.edges
+        | map(select(.node.updatedAt > $date))
+        | sort_by(.node.updatedAt)
+        | reverse
+        | .[]
+        | "\(.node.updatedAt) \(.node.title) --> \(.node.url)"
+    ' | awk -v now="$(date +%s)" '{
+        cmd = "date -j " $1 " +%s"
+        cmd | getline pr_time
+        close(cmd)
+        
+        # Calculate the difference in seconds
+        diff = now - pr_time
+        
+        # Convert the difference to a human-readable format
+        if (diff < 60) {
+            rel_time = diff " seconds ago"
+        } else if (diff < 3600) {
+            rel_time = int(diff / 60) " minutes ago"
+        } else if (diff < 86400) {
+            rel_time = int(diff / 3600) " hours ago"
+        } else {
+            rel_time = int(diff / 86400) " days ago"
+        }
+        
+        $1 = rel_time
+        print $1 "\t\t" $2 "\t\t" $3
+    }'
+
+
 }
 
 
