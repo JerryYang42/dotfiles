@@ -932,28 +932,25 @@ function gh-open-prs-mine () {
         | sort_by(.node.updatedAt)
         | reverse
         | .[]
-        | "\(.node.updatedAt) \(.node.title) --> \(.node.url)"
-    ' | awk -v now="$(date +%s)" '{
-        cmd = "date -j " $1 " +%s"
-        cmd | getline pr_time
+        | "\(.node.updatedAt) --> \(.node.title) --> \(.node.url)"
+    ' | awk '{
+        cmd = "ddiff " $1 " now -f %S"
+        cmd | getline diff_time
         close(cmd)
         
-        # Calculate the difference in seconds
-        diff = now - pr_time
-        
         # Convert the difference to a human-readable format
-        if (diff < 60) {
+        if (diff_time < 60) {
             rel_time = diff " seconds ago"
-        } else if (diff < 3600) {
+        } else if (diff_time < 3600) {
             rel_time = int(diff / 60) " minutes ago"
-        } else if (diff < 86400) {
-            rel_time = int(diff / 3600) " hours ago"
+        } else if (diff_time < 86400) {
+            rel_time = int(diff_time / 3600) " hours ago"
         } else {
-            rel_time = int(diff / 86400) " days ago"
+            rel_time = int(diff_time / 86400) " days ago"
         }
         
         $1 = rel_time
-        print $1 "\t\t" $2 "\t\t" $3
+        print
     }'
 
 
