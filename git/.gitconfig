@@ -6,6 +6,8 @@
 [alias]
 	co = checkout
 	show-url = !git remote get-url origin | sed -e \"s/git@github.com:/https:\\/\\/github.com\\//\" | sed -e \"s/\\.git$//\" | sed -e \"s/$/\\/tree\\/$(git rev-parse --abbrev-ref HEAD)/\"
+	latest-tag = !git describe --tags $(git rev-list --tags --max-count=1)
+	branches-contains = branch --contains
 [init]
 	defaultBranch = main
 [filter "lfs"]
