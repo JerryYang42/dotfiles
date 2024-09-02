@@ -857,6 +857,49 @@ function git-repos-unmerged-branches-all() {
     git-for-each-repo display-unmerged-branches-all
 }
 
+function convert-timestamp-from-iso8601-to-epoch () {
+    local timestamp=$1
+    date -j -f "%Y-%m-%dT%H:%M:%SZ" "$timestamp" +%s
+}
+
+function relative-time () {
+    local timestamp=$1
+    local epoch=$(convert-timestamp-from-iso8601-to-epoch "$timestamp")
+    local now=$(date +%s)
+    local diff=$((now - epoch))
+
+    if [[ $diff -lt 60 ]]; then
+        echo "just now"
+    elif [[ $diff -lt 3600 ]]; then
+        echo "$((diff / 60)) minutes ago"
+    elif [[ $diff -lt 86400 ]]; then
+        echo "$((diff / 3600)) hours ago"
+    else
+        echo "$((diff / 86400)) days ago"
+    fi
+}
+
+
+# List out Pull Request (PR) associated with a specific branch on GitHub
+function gh-pr () {
+    PR_LIST=$(gh pr list --head "$(git branch --show-current)" --json number,title,url,baseRefName,closed,createdAt,latestReviews)
+    PR_COUNT=$(echo "$PR_LIST" | jq '. | length')
+
+    if [ "$PR_COUNT" -gt 0 ]; then
+        FILTERED_PR_LIST=$(echo "$PR_LIST" | jq '[.[] | select(.closed == false)] | sort_by(.createdAt) | reverse')
+        
+        # TODO: prettify the output table
+        echo -e "ID\tTITLE\tURL\tBASE BRANCH\tCREATED AT"
+        echo "$FILTERED_PR_LIST" | jq -r '.[] | [.number, .title, .url, .baseRefName, .createdAt] | @tsv' | while IFS=$'\t' read -r number title url baseRefName createdAt; do
+        relative_created_at=$(relative-time "$createdAt")
+        printf "%s\t%s\t%s\t%s\t%s\t%s\n" "$number" "$title" "$url" "$baseRefName" "$relative_created_at"
+        done | column -t -s $'\t'
+        # echo "$PR_LIST" | jq -r '.[] | [.number, .title, .url, .baseRefName, .closed, (.createdAt | relative-time), .latestReviews] | @tsv' | column -t -s $'\t'
+    else
+        echo "No pull requests found."
+    fi
+}
+
 
 # For a new repo, uploaded to GitHub, set the origin
 function mk-git-repo() {
