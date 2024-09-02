@@ -888,12 +888,25 @@ function gh-pr () {
     if [ "$PR_COUNT" -gt 0 ]; then
         FILTERED_PR_LIST=$(echo "$PR_LIST" | jq '[.[] | select(.closed == false)] | sort_by(.createdAt) | reverse')
         
-        # TODO: prettify the output table
         echo -e "ID\tTITLE\tURL\tBASE BRANCH\tCREATED AT"
         echo "$FILTERED_PR_LIST" | jq -r '.[] | [.number, .title, .url, .baseRefName, .createdAt] | @tsv' | while IFS=$'\t' read -r number title url baseRefName createdAt; do
         relative_created_at=$(relative-time "$createdAt")
         printf "%s\t%s\t%s\t%s\t%s\t%s\n" "$number" "$title" "$url" "$baseRefName" "$relative_created_at"
         done | column -t -s $'\t'
+        # TODO: prettify the output table
+        # https://unix.stackexchange.com/questions/568084/format-the-shell-script-output-as-a-table
+        # awk -F'\t' '
+        #     BEGIN {
+        #         OFS="\t"; ORS="\n";
+        #         printf "%s\t|%s\t|%s\t|%s\t|%s\n", "ID", "TITLE", "URL", "BASE BRANCH", "CREATED AT"
+        #     }
+        #     {
+        #         for (i = 1; i <= NF; i++) {
+        #             gsub(/^[ \t]+|[ \t]+$/, "", $i);  # Trim leading and trailing spaces
+        #             printf "%s%s", $i, (i == NF ? ORS : "\t|")
+        #         }
+        #     }
+        # '
         # echo "$PR_LIST" | jq -r '.[] | [.number, .title, .url, .baseRefName, .closed, (.createdAt | relative-time), .latestReviews] | @tsv' | column -t -s $'\t'
     else
         echo "No pull requests found."
