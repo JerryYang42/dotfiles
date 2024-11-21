@@ -637,36 +637,36 @@ function kube-ls-pods() {
     kubectl get pods --all-namespaces -o wide
 }
 
-# function kube-recs() {
-#     if [[ $# -ne 2 ]] ; then
-#         echo "Usage: k9s-recs (dev|staging|live) (util|main)" >&2
-#         return 1;
-#     fi
+function kube-recs() {
+    if [[ $# -ne 2 ]] ; then
+        echo "Usage: k9s-recs (dev|staging|live) (util|main)" >&2
+        return 1;
+    fi
 
-#     local recsEnv=$1
-#     if [[ $recsEnv == "dev" ]]; then
-#         aws-recs-dev
-#     elif [[ $recsEnv == "staging" ]]; then
-#         aws-recs-dev
-#     elif [[ $recsEnv == "live" ]]; then
-#         aws-recs-live
-#     else 
-#         echo "Unrecognised environment ${1}" >&2
-#         return 1
-#     fi
+    local recsEnv=$1
+    if [[ $recsEnv == "dev" ]]; then
+        aws-recs-dev
+    elif [[ $recsEnv == "staging" ]]; then
+        aws-recs-dev
+    elif [[ $recsEnv == "live" ]]; then
+        aws-recs-live
+    else 
+        echo "Unrecognised environment ${1}" >&2
+        return 1
+    fi
     
-#     local recsSubEnv=$2
-#     recs-get-k8s ${recsEnv} ${recsSubEnv}
-#     export KUBECONFIG=~/.kube/recs-eks-${recsSubEnv}-${recsEnv}.conf
-#     kube-ls-pods
-#     # echo "Enter the namespace: "
-#     # read namespace
-#     # unset KUBECONFIG
-# }
-# compdef "_arguments \
-#     '1:environment arg:(dev staging live)' \
-#     '2:sub-environment arg:(util main)'" \
-#     kube-recs
+    local recsSubEnv=$2
+    recs-get-k8s ${recsEnv} ${recsSubEnv}
+    export KUBECONFIG=~/.kube/recs-eks-${recsSubEnv}-${recsEnv}.conf
+    kube-ls-pods
+    # echo "Enter the namespace: "
+    # read namespace
+    # unset KUBECONFIG
+}
+compdef "_arguments \
+    '1:environment arg:(dev staging live)' \
+    '2:sub-environment arg:(util main)'" \
+    kube-recs
 
 
 # Python                                                                    {{{1
@@ -1145,6 +1145,22 @@ function rr-recent-recommendations () {
 	aws-recs-login "${recsEnv}" > /dev/null
 	awslogs get --no-group --no-stream --timestamp "/aws/lambda/recs-reviewers-recommender-lambda-${recsEnv}" -f 'ManuscriptService' | gsed -r 's/.* Manuscript id: (.+)$/\1/g' | grep -e '^[^ ]\+$'
 }
+
+# List docker images from ECR
+
+list_recent_ecr_images() {
+    local repository_name=$1
+    if [ -z "$repository_name" ]; then
+        echo "Repository name is required"
+        return 1
+    fi
+
+    aws ecr list-images --repository-name $repository_name --query 'imageIds[0:5]' --output table
+}
+
+compdef "_arguments \
+    '1:repository-name:(api/recs-reviewers-recommender)'" \
+    list_recent_ecr_images
 
 
 # Routines                                                                  {{{1
