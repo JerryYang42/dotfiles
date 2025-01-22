@@ -1098,22 +1098,45 @@ export SSL_CERT_FILE=~/zscalar/ZscalerRootCertificate-2048-SHA256.crt
 # export HTTPLIB2_CA_CERTS="${SSL_CERT_FILE}"    # httplib2
 # export NODE_EXTRA_CA_CERTS="${SSL_CERT_FILE}"  # node
 
-function install-java-certificate() {
-    if [[ $# -ne 1 ]] ; then
-        echo 'Usage: install-java-certificate FILE'
+function install-zscaler-cert-to-jdk() {
+    # your ZScaler crt file path
+    local CERT_PATH="$HOME/zscalar/ZscalerRootCertificate-2048-SHA256.crt"
+    local CERT_ALIAS="ZscalerRootCertificate-2048-SHA256.crt"
+    # common JDK paths
+    # - "/Library/Java/JavaVirtualMachines"
+    # - "$HOME/Library/Java/JavaVirtualMachines"
+    local JDK_BASE_PATH="$HOME/Library/Java/JavaVirtualMachines"
+    
+    # Check if certificate exists
+    if [[ ! -f "$CERT_PATH" ]]; then
+        echo "Error: Zscaler certificate not found at $CERT_PATH"
         return 1
     fi
-
-    local certificate=$1
-
-    local keystores=$(find /Library -name cacerts | grep JavaVirtualMachines)
-    while IFS= read -r keystore; do
-        echo
-        echo sudo keytool -importcert -file \
-            "${certificate}" -keystore "${keystore}" -alias Zscalar
-
-        # keytool -list -keystore "${keystore}" | grep -i zscalar
-    done <<< "${keystores}"
+    
+    # Find all JDK installations
+    for jdk_dir in "$JDK_BASE_PATH"/*; do
+        if [[ -d "$jdk_dir" ]]; then
+            local cacerts_path="$jdk_dir/Contents/Home/lib/security/cacerts"
+            
+            if [[ -f "$cacerts_path" ]]; then
+                echo "Installing certificate to: $jdk_dir"
+                
+                # Try to install the certificate
+                if keytool -storepass changeit \
+                    -keystore "$cacerts_path" \
+                    -importcert \
+                    -file "$CERT_PATH" \
+                    -alias "$CERT_ALIAS" \
+                    -noprompt; then
+                    echo "✓ Successfully installed certificate"
+                else
+                    echo "✗ Failed to install certificate in $jdk_dir"
+                fi
+            else
+                echo "→ Skipping $jdk_dir (cacerts not found)"
+            fi
+        fi
+    done
 }
 
 
