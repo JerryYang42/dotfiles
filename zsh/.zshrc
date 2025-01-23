@@ -957,6 +957,38 @@ function gh-open-prs-mine () {
 }
 
 
+# given a github url, open it in IDE locally
+function git-repo-open() {
+    # accept a single argument
+    if [[ $# -ne 1 ]]; then
+        echo "Usage: git-repo-open <repo_name>"
+        return 1
+    fi
+    # find it using find command
+    # e.g. find ~/Developer -type d -name "kd-recs-integration-testing-utils" -maxdepth 3
+    local repo_name=$1
+    local dev_folder="$HOME/Developer"
+    local find_result=$(find "$dev_folder" -type d -name "$repo_name" -maxdepth 3)
+    # local repo_path=${find ~/Developer -type d -name "kd-recs-integration-testing-utils" -maxdepth 3}
+    if [[ -z "$find_result" ]]; then
+        echo "Error: $repo_name not found in $dev_folder"
+        return 1
+    fi
+    if [[ $(echo "$find_result" | wc -l) -gt 1 ]]; then
+        echo "Error: Multiple repositories found with the name $repo_name"
+        return 1
+    fi
+    local repo_path=$(echo "$find_result" | head -n 1)
+
+
+    if [[ -d "$repo_path" ]]; then
+        echo "Opening $repo_name in Visual Studio Code"
+        code "$repo_path"
+    else
+        echo "Error: $repo_name not found in $dev_folder"
+    fi
+}
+
 # For a new repo, uploaded to GitHub, set the origin
 function mk-git-repo() {
     local repo_name=""
