@@ -1087,7 +1087,7 @@ function idea() {
 }
 
 
-# Zscalar                                                                   {{{1
+# Zscaler                                                                   {{{1
 # ==============================================================================
 export SSL_CERT_FILE=~/zscalar/ZscalerRootCertificate-2048-SHA256.crt
 # export SSL_CERT_FILE=/usr/local/etc/openssl@3/certs
@@ -1138,6 +1138,13 @@ function install-zscaler-cert-to-jdk() {
         fi
     done
 }
+
+python3 -m pip config set global.trusted-host "\
+    pypi.org \
+    files.pythonhosted.org \
+    pypi.python.org \
+    " \
+    > /dev/null 2>&1
 
 
 # Homebrew                                                                  {{{1
