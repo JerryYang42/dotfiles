@@ -21,6 +21,21 @@ for dump in ~/.zcompdump(N.mh+24); do
 done
 compinit -C
 
+# Utilities                         {{{2
+# ======================================
+function select-from-multiple-options() {
+    # accept multiple options
+    if [[ $# -lt 2 ]]; then
+        echo "Usage: select-from-multiple-options <prompt> <option1> <option2> ..."
+        return 1
+    fi
+
+    local options=("${@:1}")
+
+    choice=$(printf '%s\n' "${options[@]}" | fzf)
+    echo $choice
+}
+
 # AWS config
 alias aws-which="env | grep AWS | sort"
 alias aws-clear-variables="for i in \$(aws-which | cut -d= -f1,1 | paste -); do unset \$i; done"
@@ -957,7 +972,9 @@ function gh-open-prs-mine () {
 }
 
 
-# given a github url, open it in IDE locally
+# Given a github repo name, 
+# if it exists under ~/Developer folder,
+# open it in IDE locally
 function git-repo-open() {
     # accept a single argument
     if [[ $# -ne 1 ]]; then
@@ -969,24 +986,47 @@ function git-repo-open() {
     local repo_name=$1
     local dev_folder="$HOME/Developer"
     local find_result=$(find "$dev_folder" -type d -name "$repo_name" -maxdepth 3)
-    # local repo_path=${find ~/Developer -type d -name "kd-recs-integration-testing-utils" -maxdepth 3}
     if [[ -z "$find_result" ]]; then
         echo "Error: $repo_name not found in $dev_folder"
         return 1
     fi
-    if [[ $(echo "$find_result" | wc -l) -gt 1 ]]; then
-        echo "Error: Multiple repositories found with the name $repo_name"
+
+    # Convert find_result to an array
+    paths=("${(@f)$(echo $find_result)}")
+    local repo_path=$(select-from-multiple-options "${paths[@]}")
+
+    if [[ ! -d "$repo_path" ]]; then
+        echo "Error: $repo_name not found in $dev_folder"
         return 1
     fi
-    local repo_path=$(echo "$find_result" | head -n 1)
 
-
-    if [[ -d "$repo_path" ]]; then
+    # open it with proper IDE
+    if [[ -d "$repo_path/.idea" || -f "$repo_path/build.sbt" || -f "$repo_path/pom.xml" ]]; then
+        echo "Opening $repo_name in IntelliJ IDEA"
+        idea "$repo_path"
+    elif [[ -d "$repo_path/.vscode" ]]; then
         echo "Opening $repo_name in Visual Studio Code"
         code "$repo_path"
     else
-        echo "Error: $repo_name not found in $dev_folder"
+        echo "Error: Cannot identify a proper IDE for repo\n$repo_path"
+        echo "Open it in Visual Studio Code by default"
+        code "$repo_path"
     fi
+}
+
+function git-url-open() {
+    # accept a single argument
+    if [[ $# -ne 1 ]]; then
+        echo "Usage: git-url-open <git_url>"
+        return 1
+    fi
+
+    local git_url=$1
+    # "https://github.com/elsevier-research/kd-recs-reviewers-recommender-api/pull/103"
+
+    local repo_name=$(echo "$git_url" | awk -F'/' '{print $5}')
+    echo "trying to open $repo_name ..."
+    git-repo-open "$repo_name"
 }
 
 # For a new repo, uploaded to GitHub, set the origin
