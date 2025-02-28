@@ -742,7 +742,7 @@ function k9s-kd() {
 }
 compdef "_arguments \
     '1:environment arg:(dev staging live)' \
-    k9s-kd
+    k9s-kd"
 
 # Python                                                                    {{{1
 # ==============================================================================
