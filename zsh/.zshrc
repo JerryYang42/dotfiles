@@ -147,6 +147,22 @@ function aws-recs-live() {
     aws-sso-login recs-live
 }
 
+function aws-kd-dev() {
+    if [[ "$1" == "-f" ]]; then
+        aws-clear-variables
+        shift  # Remove the -f from the arguments
+    fi
+    aws-sso-login kd-dev
+}
+
+function aws-kd-live() {
+    if [[ "$1" == "-f" ]]; then
+        aws-clear-variables
+        shift  # Remove the -f from the arguments
+    fi
+    aws-sso-login kd-live
+}
+
 export username=yangj8@science.regn.net
 
 # Useful functions
@@ -668,6 +684,65 @@ function kube-ls-pods() {
 #     '2:sub-environment arg:(util main)'" \
 #     kube-recs
 
+
+# Scopus Recommender                                                        {{{1
+# ==============================================================================
+
+function create-kubeconfig() {
+    if [[ $# -ne 3 ]]; then
+        echo "Usage: create-kubeconfig <region> <cluster-name> <config-filename>"
+        return 1
+    fi
+
+    local region=$1
+    local cluster_name=$2
+    local kubeconfig_filename=$3
+    local kubeconfig_path="$HOME/.kube/${kubeconfig_filename}.conf"
+
+    aws eks update-kubeconfig --region "$region" --name "$cluster_name" --kubeconfig "$kubeconfig_path"
+    echo "Kube config for cluster '$cluster_name' wrote to '$kubeconfig_path'"
+}
+
+function k9s-kd() {
+    if [[ $# -ne 1 ]] ; then
+        echo "Usage: k9s-kd (dev|staging|live)" >&2
+        return 1;
+    fi
+
+    local kdEnv=$1
+    if [[ $kdEnv == "dev" ]]; then
+        aws-kd-dev
+    elif [[ $kdEnv == "staging" ]]; then
+        aws-kd-dev
+    elif [[ $kdEnv == "live" ]]; then
+        aws-kd-live
+    else 
+        echo "Unrecognised environment ${1}" >&2
+        return 1
+    fi
+    
+    local eksClusterName
+    local eksRegion="us-east-1"
+    if [[ $kdEnv == "dev" ]]; then
+        eksClusterName="knowledge-discovery-nonprod-search-cluster"
+    elif [[ $kdEnv == "staging" ]]; then
+        eksClusterName="knowledge_discovery-staging-cluster"
+    elif [[ $kdEnv == "live" ]]; then
+        eksClusterName="knowledge_discovery-prod-cluster"
+    else 
+        echo "Unrecognised environment ${1}" >&2
+        return 1
+    fi
+
+    create-kubeconfig $eksRegion $eksClusterName kd-$kdEnv
+
+    export KUBECONFIG=~/.kube/kd-${kdEnv}.conf
+    # export KUBECONFIG=~/.kube/recs-eks-${recsSubEnv}-${recsEnv}.conf
+    k9s; unset KUBECONFIG  # use ';' to ensure unsetting is executed even if k9s fails
+}
+compdef "_arguments \
+    '1:environment arg:(dev staging live)' \
+    k9s-kd"
 
 # Python                                                                    {{{1
 # ==============================================================================
