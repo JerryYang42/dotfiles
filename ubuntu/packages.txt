@@ -1,0 +1,19 @@
+# Essential tools
+git
+curl
+wget
+vim
+tmux
+
+# Development tools
+python3            # Python 3 interpreter
+python3-pip        # Python package manager
+gh                 # GitHub CLI
+uv                 # Python packaging and environment manager
+code               # VS Code
+
+# PPAs
+ppa:deadsnakes/ppa  # For additional Python versions
+
+# Snap packages
+# snap:code         # VS Code
