@@ -85,3 +85,6 @@ brew "kafkacat"                                 # Generic command-line non-JVM A
 
 # SonarScanner for SonarQube
 brew "sonar-scanner"                            # Launcher to analyze a project with SonarQube
+
+# JFrog
+brew "jfrog-cli"
