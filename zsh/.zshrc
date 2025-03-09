@@ -1233,6 +1233,20 @@ else
     echo "Visit https://brew.sh for installation instructions." >&2
 fi
 
+# List docker images from ECR
+function list-recent-ecr-images() {
+    local repository_name=$1
+    if [ -z "$repository_name" ]; then
+        echo "Repository name is required"
+        return 1
+    fi
+
+    aws ecr list-images --repository-name $repository_name --query 'imageIds[0:10]' --output table
+}
+compdef "_arguments \
+    '1:repository-name:(api/recs-reviewers-recommender)'" \
+    list-recent-ecr-images
+
 
 # Recs                                                                      {{{1
 # ==============================================================================
