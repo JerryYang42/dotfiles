@@ -1397,11 +1397,140 @@ open-apps () {
 # ======================================
 
 cd-recs () {
-    cd ~/Developer/elsevier-research/recs || exit
-    cd "$(find . -type d -name "kd-*" -maxdepth 2 | fzf)" || exit
+  cd ~/Developer/elsevier-research/recs || exit
+  cd "$(find . -type d -name "kd-*" -maxdepth 2 | fzf)" || exit
 }
 
 cd-cr-recs () {
-    cd ~/Developer/elsevier-research/cr-recs || exit
-    cd "$(find . -type d -name "kd-*" -maxdepth 2 | fzf)" || exit
+  cd ~/Developer/elsevier-research/cr-recs || exit
+  cd "$(find . -type d -name "kd-*" -maxdepth 2 | fzf)" || exit
+}
+
+# Ivy2 Password Management                   {{{1
+# ===============================================
+function get-ivy2-password() {
+  local filepath="$HOME/.ivy2/.credentials"
+  if [[ ! -f "$filepath" ]]; then
+    echo "File not found: $filepath"
+    return 1
+  fi
+  local password=$(grep "^password=" "$filepath" | cut -d'=' -f2)
+  if [[ -z "$password" ]]; then
+    echo "Password not found in $filepath"
+    return 1
+  fi
+  echo "$password"
+  return "$password"
+}
+
+function validate-token() {
+  local token="$1"
+  local result=0
+  local validation_output=""
+  
+  # Check if input is provided
+  if [ -z "$token" ]; then
+    echo "Error: No token provided"
+    echo "Usage: validate-token <token>"
+    return 1
+  fi
+  
+  # Check if it's valid Base64
+  if echo "$token" | base64 -d >/dev/null 2>&1; then
+    validation_output+="✓ Valid Base64 format\n"
+  else
+    validation_output+="✗ Invalid Base64 format\n"
+    result=1
+  fi
+  
+  # If valid Base64, proceed with structural validation
+  if [ $result -eq 0 ]; then
+    local decoded=$(echo "$token" | base64 -d 2>/dev/null)
+
+    # Check format with colon separator
+    if echo "$decoded" | grep -q ":"; then
+      local parts=$(echo "$decoded" | awk -F: '{print NF}')
+      validation_output+="✓ Token has $parts parts separated by colons\n"
+      
+      # Check component structure (assuming format like prefix:version:timestamp:value)
+      local prefix=$(echo "$decoded" | cut -d':' -f1)
+      local version=$(echo "$decoded" | cut -d':' -f2)
+      local timestamp=$(echo "$decoded" | cut -d':' -f3)
+      
+      validation_output+="  Prefix: $prefix\n"
+      validation_output+="  Version: $version\n"
+      
+      # Validate timestamp component if it exists and is numeric
+      if [[ "$timestamp" =~ ^[0-9]+$ ]]; then
+        # Convert to human-readable date
+        local date_str=$(date -d @"$timestamp" 2>/dev/null || date -r "$timestamp" 2>/dev/null)
+        if [ -n "$date_str" ]; then
+          validation_output+="✓ Valid timestamp: $date_str\n"
+        else
+          validation_output+="? Timestamp numeric but out of range: $timestamp\n"
+        fi
+      else
+        validation_output+="✗ Invalid timestamp format\n"
+        result=1
+      fi
+
+      # Calculate expected number of parts based on format
+      if [ "$parts" -lt 4 ]; then
+        validation_output+="✗ Missing components (expected at least 4 parts)\n"
+        result=1
+      fi
+    else
+      validation_output+="✗ Missing expected colon separators\n"
+      result=1
+    fi
+    
+    # Additional validation - check for suspicious pattern inconsistencies
+    local token_part=$(echo "$decoded" | cut -d':' -f4)
+    if [ -z "$token_part" ]; then
+      validation_output+="✗ Missing token value component\n"
+      result=1
+    elif [ ${#token_part} -lt 8 ]; then
+      validation_output+="? Token value suspiciously short (${#token_part} chars)\n"
+    fi
+  fi
+  
+  # Print validation results
+  echo -e "$validation_output"
+  
+  # Return overall validation result (0=valid, non-zero=invalid)
+  return $result
+}
+
+function update-ivy2-password() {
+  local new_password=$1
+  if [[ -z "$new_password" ]]; then
+    echo "Usage: update-ivy2-password <new-password>"
+    return 1
+  fi
+  validate-token "$new_password"
+  if [[ ! $? -eq 0 ]]; then
+      echo "Token validation failed"
+      return 1
+  fi
+
+  local filepath="$HOME/.ivy2/.credentials"
+  if [[ ! -f "$filepath" ]]; then
+      echo "File not found: $filepath"
+      return 1
+  fi
+  local password=$(get-ivy2-password)
+  if [[ -z "$password" ]]; then
+    echo "Password not found in $filepath"
+    return 1
+  fi
+  # Confirm with user if they want to update the password
+  echo "Update password from '$password' to '$new_password' in $filepath? (y/n)"
+  read -r response
+  if [[ ! "$response" =~ ^[Yy]$ ]]; then
+    echo "Operation cancelled."
+    return 1
+  fi
+  sed -i '' "s/^password=.*/password=$new_password/" "$filepath"
+  echo “”Password updated from ‘$password’ to ‘$new_password’ in $filepath”
+  return 0
 }
