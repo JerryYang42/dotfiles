@@ -1117,22 +1117,32 @@ function mk-git-repo() {
 }
 
 function ts-init() {
+    echo "Generating package.json ..."
+    npm init -y
+
     echo "Installing Typescript ..."
     npm i typescript --save-dev
-    echo "Typescript is installed."
 
     echo "Initializing your TypeScript project ..."
     npx tsc --init
-    echo "Your TS project is initialised"\
-    ". You can customize your TypeScript configuration through the tsconfig.json file."
+    echo "Your TS project is initialised. "\
+    "You can customize your TypeScript configuration through the tsconfig.json file."
 
-    echo "Add .gitignore file ..."
-    curl -o .gitignore https://raw.githubusercontent.com/microsoft/TypeScript/main/.gitignore
+    echo "Adding .gitignore file ..."
+    curl -s -o .gitignore https://raw.githubusercontent.com/microsoft/TypeScript/main/.gitignore
     echo ".history/" >> .gitignore
-    echo "Done"
     
-    git add .gitignore tsconfig.json package.json
+    echo "Creating index.ts file ..."
+    local entrypoint="index.ts"
+    touch "$entrypoint"
+    echo "const greeting: string = \"Hello world!\";" >> "$entrypoint"
+    echo "console.log(greeting);" >> "$entrypoint"
+    
+    git add .gitignore tsconfig.json package.json "$entrypoint"
     git commit -m "scaffold TypeScript project"
+
+    npx tsc
+    node index.js
 }
 
 # Visual Studio Code                {{{2
