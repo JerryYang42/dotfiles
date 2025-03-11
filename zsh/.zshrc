@@ -1095,7 +1095,7 @@ function mk-git-repo() {
     git add README.md
 
     # Commit the changes
-    git commit -m "Initial commit"
+    git commit -m "initial commit"
 
     # Create the repository on GitHub using the GitHub CLI and push the local changes
     if [ "$is_private" = true ]; then
@@ -1116,6 +1116,24 @@ function mk-git-repo() {
     esac
 }
 
+function ts-init() {
+    echo "Installing Typescript ..."
+    npm i typescript --save-dev
+    echo "Typescript is installed."
+
+    echo "Initializing your TypeScript project ..."
+    npx tsc --init
+    echo "Your TS project is initialised"\
+    ". You can customize your TypeScript configuration through the tsconfig.json file."
+
+    echo "Add .gitignore file ..."
+    curl -o .gitignore https://raw.githubusercontent.com/microsoft/TypeScript/main/.gitignore
+    echo ".history/" >> .gitignore
+    echo "Done"
+    
+    git add .gitignore tsconfig.json package.json
+    git commit -m "scaffold TypeScript project"
+}
 
 # Visual Studio Code                {{{2
 # ======================================
