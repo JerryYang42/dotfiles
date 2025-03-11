@@ -1116,34 +1116,115 @@ function mk-git-repo() {
     esac
 }
 
-function ts-init() {
+# TypeScript Scaffold               {{{2
+# ======================================
+
+function ts-new-package-json() {
     echo "Generating package.json ..."
     npm init -y
-
-    echo "Installing Typescript ..."
-    npm i typescript --save-dev
-
-    echo "Initializing your TypeScript project ..."
+    git add package.json
+}
+function ts-install-required-packages() {
+    local type=$1
+    if [[ $type == "root" ]]; then
+        echo "Installing Typescript ..."
+        npm install typescript
+    elif [[ $type == "backend" ]]; then
+        echo "Installing Typescript ..."
+        npm install typescript @types/node ts-node --save-dev
+        npm install express @types/express
+    fi
+    git add package.json
+}
+function ts-lint-setup() {
+    npm install gts --save-dev
+    npx gts init
+    rm src/index.ts
+    rm -rf src
+    git add package.json \
+        .editorconfig \
+        .eslintrc.json \
+        .editorconfig \
+        .prettierrc.js \
+        .eslintignore
+}
+function ts-new-tsconfig() {
+    echo "Initializing tsconfig ..."
     npx tsc --init
     echo "Your TS project is initialised. "\
     "You can customize your TypeScript configuration through the tsconfig.json file."
-
+    git add tsconfig.json
+}
+function ts-new-gitignore() {
+    local source="https://raw.githubusercontent.com/microsoft/TypeScript/main/.gitignore"
     echo "Adding .gitignore file ..."
-    curl -s -o .gitignore https://raw.githubusercontent.com/microsoft/TypeScript/main/.gitignore
+    curl -s -o .gitignore "$source"
     echo ".history/" >> .gitignore
-    
+    git add .gitignore
+}
+function ts-new-entrypoint() {
     echo "Creating index.ts file ..."
     local entrypoint="index.ts"
     touch "$entrypoint"
     echo "const greeting: string = \"Hello world!\";" >> "$entrypoint"
     echo "console.log(greeting);" >> "$entrypoint"
-    
-    git add .gitignore tsconfig.json package.json "$entrypoint"
-    git commit -m "scaffold TypeScript project"
+    git add $entrypoint
 
-    npx tsc
-    node index.js
+    node --loader ts-node/esm index.ts
+    # npx tsc -w
+    # node index.js
 }
+function ts-init-backend() {
+    ts-new-package-json
+    ts-install-required-packages backend
+    ts-lint-setup
+    ts-new-tsconfig
+    ts-new-entrypoint
+    git commit -m "scaffold ts backend"
+}
+function ts-init-frontend() {
+    npm create vite@latest client -- --template react-ts
+    npx create-react-app client --template typescript
+    git commit -m "scaffold ts backend"
+}
+function ts-init-shared() {
+    # git commit -m "scaffold ts shared folder"
+}
+function ts-init-root() {
+    ts-new-package-json
+    ts-install-required-packages root
+    ts-lint-setup
+    ts-new-tsconfig
+    ts-new-gitignore
+    ts-new-entrypoint
+    git commit -m "scaffold ts root"
+}
+function ts-install-monorepo() {
+    local type=$1
+    if [[ $type == "nx" ]]; then
+        npx create-nx-workspace@latest
+    elif [[ $type == "turbo" ]]; then
+        npx create-turbo@latest
+    elif [[ $type == "lerna" ]]; then
+        npx lerna init
+    fi
+}
+function ts-init-monorepo() {
+    ts-init-root
+    mkdir packages packages/backend
+    pushd "packages/backend"
+    ts-init-backend
+    popd
+    pushd packages  # ts-init-frontend will create a "client" folder
+    ts-init-frontend
+    popd
+    # mkdir packages/shared
+    # pushd packages/shared
+    # ts-init-backend
+    # popd
+    # ts-install-monorepo nx
+}
+
 
 # Visual Studio Code                {{{2
 # ======================================
