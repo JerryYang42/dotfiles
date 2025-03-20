@@ -119,4 +119,3 @@ create-links-for-files-at-path ~/Library/Application\ Support/k9s k9s
 find $HOME/bin -type f -exec chmod +x {} \;
 mkdir -p $HOME/bin/
 create-links-for-files-at-path $HOME/bin bin
-echo "\nexport PATH=\$HOME/bin:\$PATH\n" >> $HOME/.zshenv
