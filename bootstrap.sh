@@ -114,3 +114,9 @@ mkdir -p $HOME/.config/
 create-links-for-files $HOME/.config "$CONFIG_DIRS[@]"
 
 create-links-for-files-at-path ~/Library/Application\ Support/k9s k9s
+
+# Add scripts under bin/* to $HOME/bin and add the $HOME/bin to PATH variable
+find $HOME/bin -type f -exec chmod +x {} \;
+mkdir -p $HOME/bin/
+create-links-for-files-at-path $HOME/bin bin
+echo "\nexport PATH=\$HOME/bin:\$PATH\n" >> $HOME/.zshenv

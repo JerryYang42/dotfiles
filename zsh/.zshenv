@@ -28,3 +28,5 @@ function msg-error() {
     declare msg=$1
     printf "${CLEAR_LINE}${COLOR_RED}✘ ${msg}${COLOR_NONE}\n"
 }
+
+export PATH=$HOME/bin:$PATH
