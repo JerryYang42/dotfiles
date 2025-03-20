@@ -5,7 +5,9 @@
 
 # ENV VARs                          {{{2
 # ======================================
-source ~/.env
+set -a  # Automatically export all variables
+source $HOME/.env
+set +a  # Disable automatic export
 
 # Completion system                 {{{2
 # ======================================
