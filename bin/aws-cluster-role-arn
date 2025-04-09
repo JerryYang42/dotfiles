@@ -1,0 +1,14 @@
+#!/bin/bash
+
+function cluster-role-arn() {
+    # Get account ID and role name using AWS CLI
+    IDENTITY=$(aws sts get-caller-identity --output json)
+    ACCOUNT=$(echo $IDENTITY | jq -r '.Account')
+    ARN=$(echo $IDENTITY | jq -r '.Arn')
+    ROLE=$(echo $ARN | cut -d'/' -f2)
+
+    CLUSTER_ROLE_ARN="arn:aws:iam::${ACCOUNT}:role/${ROLE}"
+    echo "${CLUSTER_ROLE_ARN}" | tr -d '\n' | pbcopy  # copy to clipboard w/o a trailing newline
+    echo "Your Cluster Role ARN has been copied to clipboard."
+    echo "${CLUSTER_ROLE_ARN}"
+}
