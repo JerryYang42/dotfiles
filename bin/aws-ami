@@ -1,0 +1,9 @@
+#!/bin/bash
+
+# Get account ID and role name using AWS CLI
+IDENTITY=$(aws sts get-caller-identity --output json)
+ACCOUNT=$(echo $IDENTITY | jq -r '.Account')
+ARN=$(echo $IDENTITY | jq -r '.Arn')
+ROLE=$(echo $ARN | cut -d'/' -f2)
+
+echo "Your Cluster Role ARN is: arn:aws:iam::${ACCOUNT}:role/${ROLE}"
