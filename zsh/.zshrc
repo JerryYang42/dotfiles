@@ -9,6 +9,11 @@ set -a  # Automatically export all variables
 source $HOME/.env
 set +a  # Disable automatic export
 
+# Prompt                            {{{2
+# ======================================
+# if you want it on the right side, see https://gist.github.com/zulhfreelancer/9c410cad5efa9c5f7c74cd0849765865
+PROMPT='%F{219}[%*]%f '$PROMPT
+
 # Completion system                 {{{2
 # ======================================
 
