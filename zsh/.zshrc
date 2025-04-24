@@ -12,7 +12,66 @@ set +a  # Disable automatic export
 # Prompt                            {{{2
 # ======================================
 # if you want it on the right side, see https://gist.github.com/zulhfreelancer/9c410cad5efa9c5f7c74cd0849765865
-PROMPT='%F{219}[%*]%f '$PROMPT
+
+# Command execution timer and precmd setup
+preexec() { 
+  timer=$SECONDS
+}
+
+# Load version control information
+autoload -Uz vcs_info
+precmd_vcs_info() { vcs_info }
+
+preexec_timer_start() { timer=$SECONDS }
+precmd_timer_end() {
+  # Clear RPROMPT if timer isn't set or command was too quick
+  if [ -z "$timer" ]; then
+    export RPROMPT=""
+    return
+  fi
+  
+  # Calculate elapsed time
+  elapsed=$(($SECONDS - $timer))
+  unset timer
+  
+  # Early return if command took less than threshold (1 second)
+  if [[ $elapsed -lt 2 ]]; then
+    export RPROMPT=""
+    return
+  fi
+  
+  # Format time using printf
+  if [[ $elapsed -ge 3600 ]]; then
+    # For commands over an hour
+    hours=$(($elapsed / 3600))
+    minutes=$((($elapsed % 3600) / 60))
+    seconds=$(($elapsed % 60))
+    export RPROMPT="%F{cyan}${hours}h${minutes}m${seconds}s%f"
+  elif [[ $elapsed -ge 60 ]]; then
+    # For commands over a minute
+    minutes=$(($elapsed / 60))
+    seconds=$(($elapsed % 60))
+    export RPROMPT="%F{cyan}${minutes}m${seconds}s%f"
+  else
+    # For commands under a minute
+    export RPROMPT="%F{cyan}${elapsed}s%f"
+  fi
+}
+preexec_functions+=(preexec_timer_start)
+precmd_functions+=(precmd_vcs_info precmd_timer_end)
+
+# Format the vcs_info_msg_0_ variable
+zstyle ':vcs_info:git:*' formats '%F{green}(%b)%f'
+zstyle ':vcs_info:*' enable git
+
+# Set up the prompt
+setopt prompt_subst
+
+# PROMPT with all three features:
+# 1. Exit status (red # for error, normal color for success)
+# 2. Newline for more space
+# 3. Command execution time is handled by RPROMPT above
+PROMPT='%F{219}[%*]%f %F{214}%1~%f ${vcs_info_msg_0_} %(?.%F{yellow}.%F{red})%#%f '
 
 # Completion system                 {{{2
 # ======================================
