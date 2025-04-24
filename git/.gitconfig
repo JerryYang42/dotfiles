@@ -9,6 +9,7 @@
 	url-branch = !git url-repo | sed -e \"s/$/\\/tree\\/$(git rev-parse --abbrev-ref HEAD)/\"
 	latest-tag = !git describe --tags $(git rev-list --tags --max-count=1)
 	branches-contains = branch --contains
+	tag-commit = rev-list -n 1
 [init]
 	defaultBranch = main
 [filter "lfs"]
