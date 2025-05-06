@@ -1674,3 +1674,8 @@ function rr-lambda-iterator-age() {
 compdef "_arguments \
     '1:environment arg:(dev staging live)'" \
     rr-lambda-iterator-age
+
+
+function kill9 () {
+    kill -9 $(ps aux | fzf | awk '{print $2}')
+}
