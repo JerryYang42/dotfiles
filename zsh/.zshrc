@@ -252,6 +252,12 @@ function tabulate-by-comma() {
         | column -t -s '',''
 }
 
+# Tabluate by space
+# cat foo.txt | tabulate-by-space
+function tabulate-by-space() {
+    column -t -s ' '
+}
+
 # Calculate the result of an expression
 # calc 2 + 2
 function calc () {
@@ -409,7 +415,7 @@ function rr-lambda-performance() {
     fi
 
     local recsEnv="${1}"
-    aws-recs-login "${recsEnv}" > /dev/null
+    # aws-recs-login "${recsEnv}" > /dev/null
 
     # Pull out manuscript ID, stage, and duration from the logs
     # Ignore JDBCService initialisation because there is no manuscript ID associated to group by
@@ -537,7 +543,7 @@ function rr-lambda-invocations() {
     fi
 
     local recsEnv="${1}"
-    aws-recs-login "${recsEnv}" > /dev/null
+    # aws-recs-login "${recsEnv}" > /dev/null
 
     lambdas=(
         recs-rev-reviewers-data-pump-lambda-${recsEnv}
@@ -552,8 +558,8 @@ function rr-lambda-invocations() {
             --namespace 'AWS/Lambda' \
             --dimensions Name=FunctionName,Value="${lambda}" \
             --metric-name 'Invocations' \
-            --start-time $(date --iso-8601=seconds --date='7 days ago') \
-            --end-time   $(date --iso-8601=seconds) \
+            --start-time $(gdate --iso-8601=seconds --date='7 days ago') \
+            --end-time   $(gdate --iso-8601=seconds) \
             --period $(calc '60 * 60 * 24') \
             --statistics Sum \
             | jq -r '["Time", "Total"], (.Datapoints | sort_by(.Timestamp) | .[] | [.Timestamp, .Sum]) | @csv' \
@@ -1642,3 +1648,29 @@ function update-ivy2-password() {
   echo “”Password updated from ‘$password’ to ‘$new_password’ in $filepath”
   return 0
 }
+
+function rr-lambda-iterator-age() {
+    if [[ $# -ne 1 ]]; then
+        echo "Usage: rr-lambda-iterator-age (dev|staging|live)"
+        return 1
+    fi
+
+    local recsEnv="${1}"
+    # aws-recs-login "${recsEnv}" > /dev/null
+
+    echo 'Iterator age at' $(gdate --iso-8601=seconds)
+    echo
+    aws cloudwatch get-metric-statistics \
+        --namespace 'AWS/Lambda' \
+        --dimensions Name=FunctionName,Value=recs-reviewers-recommender-lambda-${recsEnv} \
+        --metric-name 'IteratorAge' \
+        --start-time $(gdate --iso-8601=seconds --date='45 minutes ago') \
+        --end-time   $(gdate --iso-8601=seconds) \
+        --period 300 \
+        --statistics Maximum \
+        | jq -r '["Time", "Seconds", "Minutes", "Hours"], (.Datapoints | sort_by(.Timestamp) | .[] | [.Timestamp, .Maximum/1000, .Maximum/(60 * 1000), .Maximum/(60 * 60 * 1000)]) | @tsv' \
+        | tabulate-by-tab
+}
+compdef "_arguments \
+    '1:environment arg:(dev staging live)'" \
+    rr-lambda-iterator-age
