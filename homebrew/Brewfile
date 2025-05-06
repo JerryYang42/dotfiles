@@ -40,14 +40,14 @@ brew "gnupg"                                    # GNU Pretty Good Privacy (PGP) 
 cask "gpg-suite"                                # GPG Suite
 cask "keepassxc"                                # Password manager app
 # Currently broken on Big Sur; application is untrusted
-# cask "keybase"                                  # End-to-end encryption software
+# cask "keybase"                                # End-to-end encryption software
 
 # Notebook
 cask "evernote"                                 # App for note taking, organizing, task lists, and archiving
 cask 'obsidian'                                 # Markdown note management
 
 # APIs
-cask "insomnia"                                 # HTTP and GraphQL Client
+cask "insomnium"                                # HTTP and GraphQL Client
 
 # eBooks
 cask "kindle"                                   # Kindle for Mac
@@ -87,6 +87,10 @@ brew "wget"                                     # Internet file retriever
 brew "xsv"                                      # Fast CSV toolkit written in Rust
 brew "zsh"                                      # UNIX shell (command interpreter)
 cask "scroll-reverser"                          # Tool to reverse the direction of scrolling
+brew "tlrc"                                     # Simplified and community-driven man pages, tldr rewritten in Rust
+brew "duf"                                      # Disk usage/availability on mounted filesystems
+brew "bat"                                      ## A cat clone with wings
+brew "zoxide"                                   # A smarter cd command that learns your habits
 
 # Document and image manipulation
 brew "imagemagick"                              # Tools and libraries to manipulate images in many formats
