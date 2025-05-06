@@ -181,7 +181,7 @@ fi
 #
 # To initialize zoxide, add this to your shell configuration file (usually ~/.zshrc):
 #
-eval "$(zoxide init zsh)"
+# eval "$(zoxide init zsh)"
 
 
 # AWS config
@@ -1606,15 +1606,14 @@ open-apps () {
 
 # Quick Navigation                  {{{2
 # ======================================
-
-cd-recs () {
-  z ~/Developer/elsevier-research/recs || exit
-  z "$(find . -type d -name "kd-*" -maxdepth 2 | fzf)" || exit
+function zel() {
+  z ~/Developer/elsevier-research || exit
+  z "$(find . -type d -name "kd-*" -maxdepth 3 | fzf)" || exit
 }
-
-cd-cr-recs () {
-  z ~/Developer/elsevier-research/cr-recs || exit
-  z "$(find . -type d -name "kd-*" -maxdepth 2 | fzf)" || exit
+function zdev() {
+  z ~/Developer || exit
+# Use fd to quickly find directories containing .git
+  z "$(fd --type d --hidden --max-depth 5 --glob '.git' --exec dirname {} | fzf)" || exit
 }
 
 # Ivy2 Password Management                   {{{1
