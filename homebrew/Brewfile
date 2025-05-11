@@ -69,6 +69,7 @@ brew "gnuplot"                                  # Command-driven, interactive fu
 brew "graphviz"                                 # Graph visualization software from AT&T and Bell Labs
 brew "htop"                                     # Improved top (interactive process viewer)
 brew "jq"                                       # Lightweight and flexible command-line JSON processor
+brew "yq"                                       # Lightweight CLI YAML, JSON, XML, CSV and properties documents processor
 brew "miller"                                   # Like sed, awk, cut, join & sort for name-indexed data such as CSV
 brew "mitmproxy"                                # Intercept, modify, replay, save HTTP/S traffic
 brew "ncdu"                                     # NCurses Disk Usage
