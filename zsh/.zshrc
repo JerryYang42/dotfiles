@@ -1832,3 +1832,5 @@ function __zoxide_doctor() {
         '' >&2
 }
 
+
+alias duckdb="$HOME/.duckdb/cli/latest/duckdb"
