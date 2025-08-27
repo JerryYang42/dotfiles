@@ -1341,8 +1341,8 @@ compdef '_alternative \
     "arguments:custom arg:(temurin-8.jdk temurin-11.jdk temurin-17.jdk temurin-20.jdk temurin-21.jdk)"' \
     java-version
 
-# Default Java 17
-java-version temurin-17.jdk
+# Default Java 21
+java-version temurin-21.jdk
 
 
 # Fetch k8s credentials
