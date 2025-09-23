@@ -1834,3 +1834,9 @@ function __zoxide_doctor() {
 
 
 alias duckdb="$HOME/.duckdb/cli/latest/duckdb"
+
+
+function docker-zeppelin() {
+    docker run -p 8080:8080 --rm --name zeppelin apache/zeppelin:0.12.0 && \
+    echo "Apache Zeppelin is running at http://localhost:8080"
+}
