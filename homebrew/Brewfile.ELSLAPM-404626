@@ -88,3 +88,6 @@ brew "sonar-scanner"                            # Launcher to analyze a project 
 
 # JFrog
 brew "jfrog-cli"
+
+# GraphQL
+brew "rover"                                    # CLI for managing and maintaining data graphs with Apollo Studio
