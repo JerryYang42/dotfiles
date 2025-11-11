@@ -1840,3 +1840,16 @@ function docker-zeppelin() {
     docker run -p 8080:8080 --rm --name zeppelin apache/zeppelin:0.12.0 && \
     echo "Apache Zeppelin is running at http://localhost:8080"
 }
+
+
+# =============================================================================
+#
+# Shared Search api
+#
+
+function docker_login_jfrog() {
+    local JFROG_USERNAME="yangj8"
+    local JFROG_TOKEN="$JFROG_TOKEN"  # loaded from ~/.env
+    echo $JFROG_TOKEN | docker login docker-knowledge-discovery-release-local.rt.artifactory.tio.systems -u $JFROG_USERNAME --password-stdin
+}
+
