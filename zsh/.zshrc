@@ -1342,7 +1342,7 @@ compdef '_alternative \
     java-version
 
 # Default Java 25
-java-version temurin-25.jd
+java-version temurin-25.jdk
 
 
 # Fetch k8s credentials
@@ -1853,3 +1853,30 @@ function docker_login_jfrog() {
     echo $JFROG_TOKEN | docker login docker-knowledge-discovery-release-local.rt.artifactory.tio.systems -u $JFROG_USERNAME --password-stdin
 }
 
+
+ Clear GitHub Copilot IntelliJ plugin cache and restart IntelliJ
+# clear-copilot-ij-cache
+function clear-copilot-ij-cache() {
+    local cache_dir="$HOME/.config/github-copilot/ic"
+    
+    echo "🗑️  Clearing GitHub Copilot IntelliJ cache..."
+    
+    # Check if cache directory exists
+    if [[ ! -d "$cache_dir" ]]; then
+        echo "❌ Cache directory not found: $cache_dir"
+        return 1
+    fi
+    
+    # Delete the three chat-* folders
+    for folder in chat-agent-sessions chat-edit-sessions chat-sessions; do
+        local folder_path="$cache_dir/$folder"
+        if [[ -d "$folder_path" ]]; then
+            rm -rf "$folder_path"
+            echo "✓ Deleted: $folder"
+        else
+            echo "⚠️  Not found: $folder"
+        fi
+    done
+    
+    echo "✓ Cache cleared successfully"
+}
