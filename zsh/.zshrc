@@ -1368,7 +1368,7 @@ export SSL_CERT_FILE=~/zscalar/ZscalerRootCertificate-2048-SHA256.crt
 # export AWS_CA_BUNDLE="${SSL_CERT_FILE}"        # botocore
 # export CURL_CA_BUNDLE="${SSL_CERT_FILE}"       # curl
 # export HTTPLIB2_CA_CERTS="${SSL_CERT_FILE}"    # httplib2
-# export NODE_EXTRA_CA_CERTS="${SSL_CERT_FILE}"  # node
+export NODE_EXTRA_CA_CERTS=$HOME/ca-certs/Zscaler-Root-CA.pem    # node, required by Claude Code
 
 function install-zscaler-cert-to-jdk() {
     # your ZScaler crt file path
