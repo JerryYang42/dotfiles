@@ -1342,7 +1342,7 @@ compdef '_alternative \
     java-version
 
 # Default Java 25
-java-version temurin-25.jdk
+java-version temurin-17.jdk
 
 
 # Fetch k8s credentials
@@ -1880,3 +1880,7 @@ function clear-copilot-ij-cache() {
     
     echo "✓ Cache cleared successfully"
 }
+
+# Add path to Claude Code CLI
+
+export PATH="$HOME/.local/bin:$PATH"
