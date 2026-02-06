@@ -1884,3 +1884,11 @@ function clear-copilot-ij-cache() {
 # Add path to Claude Code CLI
 
 export PATH="$HOME/.local/bin:$PATH"
+
+# tabtab source for packages
+# uninstall by removing these lines
+[[ -f ~/.config/tabtab/__tabtab.zsh ]] && . ~/.config/tabtab/__tabtab.zsh || true
+
+
+# alias for quick add url to read-later-today app, github.com/JerryYang42/read-later-today
+alias rlt="read-later-today add \"$(pbpaste)\""
