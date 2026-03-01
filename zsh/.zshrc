@@ -1854,8 +1854,7 @@ function docker_login_jfrog() {
 }
 
 
- Clear GitHub Copilot IntelliJ plugin cache and restart IntelliJ
-# clear-copilot-ij-cache
+# Clear GitHub Copilot IntelliJ plugin cache and restart IntelliJ
 function clear-copilot-ij-cache() {
     local cache_dir="$HOME/.config/github-copilot/ic"
     
