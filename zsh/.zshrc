@@ -1891,3 +1891,7 @@ export PATH="$HOME/.local/bin:$PATH"
 
 # alias for quick add url to read-later-today app, github.com/JerryYang42/read-later-today
 alias rlt="read-later-today add \"$(pbpaste)\""
+
+
+# Add cargo bin to PATH for Rust tools
+export PATH="$HOME/.cargo/bin:$PATH"
