@@ -1280,6 +1280,10 @@ export SSL_CERT_FILE=~/zscalar/ZscalerRootCertificate-2048-SHA256.crt
 # export HTTPLIB2_CA_CERTS="${SSL_CERT_FILE}"    # httplib2
 export NODE_EXTRA_CA_CERTS=$HOME/ca-certs/Zscaler-Root-CA.pem    # node, required by Claude Code
 
+# This tells uv to use the system keychain for SSL verification where the ZScaler certificate is already installed
+export UV_NATIVE_TLS=true                        # uv
+
+
 function install-zscaler-cert-to-jdk() {
     # your ZScaler crt file path
     local CERT_PATH="$HOME/zscalar/ZscalerRootCertificate-2048-SHA256.crt"
