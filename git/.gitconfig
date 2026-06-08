@@ -10,6 +10,17 @@
 	latest-tag = !git describe --tags $(git rev-list --tags --max-count=1)
 	branches-contains = branch --contains
 	tag-commit = rev-list -n 1
+	wt-pr = "!f() { \
+      root=$(git rev-parse --show-toplevel); repo=$(basename \"$root\"); \
+      dir=\"$root/../$repo.worktrees/pr-$1\"; \
+      git worktree add --detach \"$dir\" && ( cd \"$dir\" && gh pr checkout \"$1\" ); \
+      echo \"$dir\"; \
+    }; f"
+	wt-pr-rm = "!f() { \
+      root=$(git rev-parse --show-toplevel); repo=$(basename \"$root\"); \
+      git -C \"$root\" worktree remove --force \"$root/../$repo.worktrees/pr-$1\"; \
+      git -C \"$root\" worktree prune; \
+    }; f"
 [init]
 	defaultBranch = main
 [filter "lfs"]
