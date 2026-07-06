@@ -1522,7 +1522,7 @@ open-apps () {
 # ======================================
 function zel() {
   z ~/Developer/elsevier-research || exit
-  z "$(find . -type d -name "kd-*" -maxdepth 3 | fzf)" || exit
+  z "$(find . -maxdepth 3 -type d \( -name "kd-*" -o -name "saip-*" \) | fzf)" || exit
 }
 function zdev() {
   z ~/Developer || exit
