@@ -1809,3 +1809,6 @@ alias rlt="read-later-today add \"$(pbpaste)\""
 
 # Add cargo bin to PATH for Rust tools
 export PATH="$HOME/.cargo/bin:$PATH"
+
+# NVD API Key for OWASP Dependency Check applied using Elsevier work email
+export SD_OWASP_DEPCHECK_NVD_API_KEY="05d4e66e-365f-4711-8efe-adc5c1bce674"
