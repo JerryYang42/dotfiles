@@ -1261,11 +1261,11 @@ getk8s() {
     export KUBECONFIG=~/.kube/recs-eks-main-$1.conf
 }
 
-# Add IntelliJ Community Edition to PATH
-export PATH="$PATH:/Applications/IntelliJ IDEA CE.app/Contents/MacOS"
+# Add IntelliJ Unified Edition to PATH
+export PATH="$PATH:/Applications/IntelliJ IDEA.app/Contents/MacOS"
 
 function idea() {
-    open -na "IntelliJ IDEA CE" --args "$@"  # https://stackoverflow.com/questions/57309605/how-to-run-intellij-idea-from-terminal-in-detached-mode
+    open -na "IntelliJ IDEA" --args "$@"  # https://stackoverflow.com/questions/57309605/how-to-run-intellij-idea-from-terminal-in-detached-mode
 }
 
 
