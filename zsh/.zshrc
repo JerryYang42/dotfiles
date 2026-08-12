@@ -1292,7 +1292,11 @@ function install-zscaler-cert-to-jdk() {
     # - "/Library/Java/JavaVirtualMachines"
     # - "$HOME/Library/Java/JavaVirtualMachines"
     local JDK_BASE_PATH="$HOME/Library/Java/JavaVirtualMachines"
-    
+    # app-bundled JREs under /Applications that need sudo to modify
+    local -a SUDO_CACERTS_PATHS=(
+        "/Applications/DBeaver.app/Contents/Eclipse/jre/Contents/Home/lib/security/cacerts"
+    )
+
     # Check if certificate exists
     if [[ ! -f "$CERT_PATH" ]]; then
         echo "Error: Zscaler certificate not found at $CERT_PATH"
@@ -1321,6 +1325,26 @@ function install-zscaler-cert-to-jdk() {
             else
                 echo "→ Skipping $jdk_dir (cacerts not found)"
             fi
+        fi
+    done
+
+    # Install into app-bundled JREs under /Applications (require sudo)
+    for cacerts_path in "${SUDO_CACERTS_PATHS[@]}"; do
+        if [[ -f "$cacerts_path" ]]; then
+            echo "Installing certificate to: $cacerts_path"
+
+            if sudo keytool -storepass changeit \
+                -keystore "$cacerts_path" \
+                -importcert \
+                -file "$CERT_PATH" \
+                -alias "$CERT_ALIAS" \
+                -noprompt; then
+                echo "✓ Successfully installed certificate"
+            else
+                echo "✗ Failed to install certificate in $cacerts_path"
+            fi
+        else
+            echo "→ Skipping $cacerts_path (cacerts not found)"
         fi
     done
 }
