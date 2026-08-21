@@ -1818,10 +1818,6 @@ function clear-copilot-ij-cache() {
     echo "✓ Cache cleared successfully"
 }
 
-# Add path to Claude Code CLI
-
-export PATH="$HOME/.local/bin:$PATH"
-
 # tabtab source for packages
 # uninstall by removing these lines
 [[ -f ~/.config/tabtab/__tabtab.zsh ]] && . ~/.config/tabtab/__tabtab.zsh || true
@@ -1837,6 +1833,11 @@ export PATH="$HOME/.cargo/bin:$PATH"
 # NVD API Key for OWASP Dependency Check applied using Elsevier work email
 export OWASP_DEPCHECK_NVD_API_KEY="05d4e66e-365f-4711-8efe-adc5c1bce674"
 
-# Should NOT use AWS Bedrock models in Claude CLI in Enterprise subscriptions
-unset CLAUDE_CODE_USE_BEDROCK
-unset ANTHROPIC_MODEL
+# Agent Plugins                                                             {{{1
+# ==============================================================================
+zshDir="${${(%):-%x}:A:h}"
+
+for f in "$zshDir/agent.d/"*.zsh(N); do
+    source "$f"
+done
+unset zshDir
