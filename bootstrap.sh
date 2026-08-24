@@ -32,6 +32,7 @@ CONFIG_DIRS=(
 # Files to link to in $HOME/.claude
 CLAUDE_FILES=(
     "claude/CLAUDE.md"
+    "claude/CodeGraph.md"
     "claude/RTK.md"
     "claude/settings.json"
 )

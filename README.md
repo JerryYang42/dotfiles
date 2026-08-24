@@ -20,7 +20,7 @@ needs to be linked.
   `k9s/`, `ripgrep/`), and add its files to the `FILES`/`CONFIG_DIRS` arrays in
   `bootstrap.sh` so they get symlinked.
 - `claude/` holds the Claude Code config worth version controlling
-  (`CLAUDE.md`, `RTK.md`, `settings.json`, custom `skills/`).
+  (`CLAUDE.md`, `CodeGraph.md`, `RTK.md`, `settings.json`, custom `skills/`).
 - Zsh plugin/agent config follows a conf.d pattern: add one file per plugin under
   `zsh/agent.d/<plugin>.zsh`. Every `*.zsh` file there is sourced automatically by
   `zsh/.zshrc` — no changes to `.zshrc` needed.
