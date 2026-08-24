@@ -185,8 +185,11 @@ brew "postgresql"                               # Object-relational database sys
 
 # parquet
 # parquet tools: https://github.com/hangxie/parquet-tools?tab=readme-ov-file#brew-install
-tap "hangxie/tap"                                 # Apache Parquet command-line tools and utilities
+tap "hangxie/tap"                               # Apache Parquet command-line tools and utilities
 brew "parquet-tools"                            # Apache Parquet command-line tools and utilities
+
+# LLM token reduction framework
+brew "rtk"                                      # Rust Token Killer
 
 ################################################################################
 # Fun

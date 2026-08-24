@@ -7,3 +7,6 @@
 .gitconfig.local
 **/*.no-commit
 *.DS_Store
+
+.claude/
+.codegraph/
