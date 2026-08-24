@@ -6,7 +6,7 @@
     ]
   },
   "enabledPlugins": {
-    "superpowers@claude-plugins-official": false,
+    "superpowers@claude-plugins-official": false
   },
   "extraKnownMarketplaces": {
     "saip-orion-plugins": {
