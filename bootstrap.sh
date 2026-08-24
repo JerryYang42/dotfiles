@@ -29,6 +29,18 @@ CONFIG_DIRS=(
     "htop/htop"
 )
 
+# Files to link to in $HOME/.claude
+CLAUDE_FILES=(
+    "claude/CLAUDE.md"
+    "claude/RTK.md"
+    "claude/settings.json"
+)
+
+# Directories to link to in $HOME/.claude/skills
+CLAUDE_SKILL_DIRS=(
+    "claude/skills/aws-sdk-v1-to-v2-migration"
+)
+
 RED='\033[0;31m'
 GREEN='\033[0;32m'
 NO_COLOR='\033[0m'
@@ -112,5 +124,9 @@ create-links-for-files $HOME         "$FILES[@]"
 
 mkdir -p $HOME/.config/
 create-links-for-files $HOME/.config "$CONFIG_DIRS[@]"
+
+mkdir -p $HOME/.claude/skills
+create-links-for-files $HOME/.claude        "$CLAUDE_FILES[@]"
+create-links-for-files $HOME/.claude/skills "$CLAUDE_SKILL_DIRS[@]"
 
 create-links-for-files-at-path ~/Library/Application\ Support/k9s k9s
